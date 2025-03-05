@@ -1,0 +1,22 @@
+# Big Data
+
+[TOC]
+
+## 1  Introduzione
+
+
+
+## 2  Map Reduce 
+
+
+
+skip da hadoop fino  a matrix-vector multiplication
+
+
+
+## 3  Spark
+
+
+
+
+
