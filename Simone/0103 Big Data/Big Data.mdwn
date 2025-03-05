@@ -4,11 +4,60 @@
 
 ## 1  Introduzione
 
+ I dati al giorno d'oggi vengono prodotti velocemente, sono eterogenei e ricchi di informazioni. Esiste la regola delle 3 V:
+
+- Volume: vanno da pochi MB a PB
+- Velocità: da batch, a periodici fino a real time
+- Varietà: tabelle, database, log, foto, audio, social e non strutturati
+
+In generale si definisce come big data qualsiasi dato la cui dimensione è un problema per operazioni di conservazione, trasmissione ed elaborazione. Supponiamo di voler analizzare 100 TB di dati, ovviamente non conviene farlo su una sola macchina. Pertanto l'idea è quella di scalare orizzontalmente. Questo comporta la richiesta di più spazio fisico, costi energetici e rete di comunicazione, ma migliora i costi, fault tolerance e scalabilità.
+
+Distinguiamo la High Performance Computing e la Big Data Computing. La HPC funziona come un cluster di macchine indipendenti dette nodi, che comunicano in una rete ad alta velocità con accesso ad uno storage centralizzato. Dato che ogni macchina ha una sua RAM, si dice architettura a memoria distribuita. Avendo diversi nodi questi devono coordinarsi correttamente, ciò viene fatto dal nodo master che si occupa dell'orchestrazione, mentre i nodi worker si occupano del calcolo effettivo. Possono comunicare con Message Passing Interface. Il problema è che in questo modo dato che la memoria di massa è centralizzata questa non scala facilmente, pertanto nasce l'architettura dei sistemi big data, dove ogni nodo ha il suo storage e l'unica cosa che li lega è la rete di comunicazione. Ovviamente, devono agire come cluster, pertanto dobbiamo adottare dei File System distribuiti come Hadoop Distribuited File System, e sistemi di calcolo distribuito come Spark.
+
+Link utile: https://colab.research.google.com/
+
+Esame: Scritto 25%, Progetto 75% da consegnare entro 60 giorni dal superamento dello scritto, laboratorio in aula che dà 3 punti extra.
+
 
 
 ## 2  Map Reduce 
 
+Serve come piattaforma di storage ed analisi di big data, permette a programmatori senza esperienza di sistemi distribuiti di utilizzare le risorse di un data center per elaborare grandi moli di dati. 
 
+Il sistema Hadoop è composto da:
+
+- MapReduce Runtime (coordinatore): paradigma per programmazione distribuita
+- Hadoop Distribuited FIle System (HDFS): per permettere alle macchine di agire come cluster, implementando ridondanza dei dati e fault tolerance
+
+Ovviamente nasce dall'esigenza di dover scalare orizzontalmente piuttosto che verticalmente. Vogliamo processare molti dati, in maniera distribuita e semplice. Questa soluzione è proprio quella di MapReduce. Si utilizza un file system distribuito, dividendo i file in chunk, ognuno di essi verrà distribuito sul cluster e replicato. Si ragionerà in termini di nodi master, in HDFS è Name Node che appunto memorizza metadati di dove si trovano i chunks dei file, e i Data Node, che immagazinano e reuperano i blocchi se richiesto.
+
+Le sfide sono molte, come per esempio
+
+- Map
+  - Come itero su molti dati in parallelo?
+  - Come estraggo informazioni per ogni iterazione?
+  -  Come ordino i risultati?
+- Reduce
+  - Come aggrego i dati intermedi?
+  - Come genero l'output finale?
+
+Il paradigma MapReduce fonda le radici nella programmazione funzionale, dove Map prende una funzione e la applica ad ogni elemento, mentre Fold applica iterativamente una funzione  per aggregare i risultati. In MapReduce si ha:
+
+- Map: prende in input un oggetto key-value $(k,v)$ e restituisce un elenco di coppie $(k_1,v_1),...,(k_n,v_n)$
+- Group by key: colleziona le coppie con stessa chiave $k$ e vi associa tutti i valori.
+- Reduce: prende in input l'elemento $(k, [v_1,...,v_n])$ e li combina in un certo modo.
+
+La pipeline è sempre la stessa, variano le funzioni applicate da Map e Reduce.
+
+Più nello specifico, la fase Map prende $n$ elementi key-value, e ne restituisce $m$ intermedi. Questi vengono raggruppati per chiave, creando elementi con chiave e una lista di valori associato, e la Reduce riduce la lista rimanente restituendo elementi key-value.
+
+Un tipico problema risolvibile con MapReduce è il word counting, altamente parallelizzabile
+
+<img src=".\img\wordcount.png" style="zoom:67%;" />
+
+
+
+slide 
 
 skip da hadoop fino  a matrix-vector multiplication
 
