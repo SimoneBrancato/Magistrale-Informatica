@@ -1,0 +1,95 @@
+# Quantum Information
+
+[TOC]
+
+
+
+## 1  Introduzione
+
+### 1.1 Che cos'è la teoria dell'informazione?
+
+Ci si chiede:
+
+- Fino a che punto posso comprimere dati senza perdere informazione? Non vanno bene le compressioni di tipo lossy
+- Qual è il miglior tasso di trasmissione per la comunicazione? Ogni volta che trasmettiamo dati lo facciamo su mezzi inaffidabili, quindi quanta informazione posso trasmettere in maniera affidabile (tasso di errore prossimo a zero) su un determinato mezzo? aggiungere ridondanza non permette di migliorare molto la situazione, perchè dovremmo aggiungere ridondanza infinita per avere tasso di errore nullo
+
+Ha applicazioni in:
+
+- Fisica (termodinamica)
+- Informatica (Complessità, Pattern Recognition e altri)
+- Matematica (probabilità)
+- Economia (andamento delle borse)
+
+Cercheremo di capire come misurare l'informazione, come comprimere dati e comunicare su canali inaffidabili. Un esempio sono le linee telefoniche analogiche, comunicazioni con onde radio. Un'altra applicazione sono le trasmissioni del DNA nella riproduzione delle cellule, o scrittura su Hard Disk. 
+
+Possiamo utilizzare un sender e un receiver, prima del canale di comunicazione abbiamo l'encoder e appena dopo il decoder così da comprimere i dati in trasmissione. Ciò che vogliamo è che i dati in input e output siano gli stessi. La teoria dell'informazione studia proprio i limiti e le potenzionalità di queste soluzioni. Standardizzare certe soluzioni permette di minimizzare i costi.
+
+Tutto si basa sulla teoria di Shannon, che definisce il poter inviare informazione con probabilità di errore $\epsilon$, tendente a zero, e per farlo dobbiamo definire il tasso di comunicazione, minore della capacità del canale. Nella trasmissione del segnale dobbiamo stare attenti alle sue caratteristiche, che definiscono la sua complessità intrinseca ovvero quanto può essere compresso, viene detta entropia, ed è il limite invalicabile per la compressione di quel dato. Se l'entropia è minore della capacità del canale allora possiamo effettuare comunicazioni senza errori, è matematicamente possibile. In realtà la teoria suggerisce soluzioni non fattibili nella pratica perchè troppo inefficienti, non parleremo propriamente delle soluzioni ma delle idee che stanno alla loro base.
+
+### 1.2  Che cos'è la teoria dell'informazione quantistica?
+
+Ci concentreremo sui dettagli tecnici di come funzionano i supporti di memorizzazione, sappiamo che se i transistor sono molto piccoli sono molto veloci, ad un certo punto non possiamo ignorare gli effetti quantistici. Supporre che il sistema segue le leggi dell'informazione quantistica cosa implica? L'equivalente quantistico del bit è il qubit, piuttosto che essere 0/1 si può trovare in una loro sovrapposizione, che può essere misurata in probabilità. Tali effetti possono essere simulati con sistemi classici, ma quello che distingue la quantum information sono i termini di coerenza usando matrici densità. Inoltre, certi sistemi quantistici possono essere indipendenti, correlati classicamente o entangled, quindi utilizzando la correlazione non classica dell'entanglement quantistico.
+
+Vedremo come misurare l'entropia di uno stato quantistico (Entropia di Von Neumann) e la compressione. Parleremo di trasmissione di bit (capacità classica), qubit non entangled (capacità quantistica) e qubit entangled (capacità quantistica assistita).
+
+Approfondire: Sfera di Bloch
+
+### 1.3  Obiettivi del corso, prerequisiti, informazioni generali
+
+Fornire una panoramica semplice ma rigorosa della teoria dell'informazione classica e quantistica.
+
+Tutto ciò che viene fatto a lezione è oggetto d'esame.
+
+Libro principale prima parte: MacKay - Information Theory, Inference and Learning Algorithms (Scaricabile online)
+
+Libri seconda parte: vedi syllabus, tutti scaricabili
+
+- Watrous
+- Mermin più per informatici
+- Nielsen più per fisici
+
+ Esame: 
+
+- Due prove in itinere, una per parte, esercizi teorici e pratici, chi supera 18 di media allora verrà proposto il voto con aggiunta di un bonus
+- Scritto con orale
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
