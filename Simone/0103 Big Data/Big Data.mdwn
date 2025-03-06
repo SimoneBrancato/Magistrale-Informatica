@@ -51,13 +51,82 @@ La pipeline è sempre la stessa, variano le funzioni applicate da Map e Reduce.
 
 Più nello specifico, la fase Map prende $n$ elementi key-value, e ne restituisce $m$ intermedi. Questi vengono raggruppati per chiave, creando elementi con chiave e una lista di valori associato, e la Reduce riduce la lista rimanente restituendo elementi key-value.
 
-Un tipico problema risolvibile con MapReduce è il word counting, altamente parallelizzabile
+Un tipico problema risolvibile con MapReduce è il word counting, altamente parallelizzabile.
 
 <img src=".\img\wordcount.png" style="zoom:67%;" />
 
+Vediamo il codice:
+
+```python
+map(key, value):
+    # key: document name, value: text
+    for w in value:
+        emit(w,1)
+
+reduce(key, values):
+	# key: a word, value: an iterator over counts
+    result = 0
+    for v in values:
+        result += v
+    emit(key, result)
+```
+
+L'ambiente MapReduce si occupa di:
+
+- Partizionare i dati in input
+- Schedula l'esecuzione del codice sulle varie macchine
+- Effettua la group by key
+- Gestisce i crash delle macchine
+- Gestisce la comunicazione tra macchine
+
+Un altro esempio di problema risolvibile con MapReduce è contare quante parole di una certa lunghezza esistono in una collezione di documenti, l'input è proprio l'insieme dei documenti.
+
+```python
+ map(key, value):
+     # key: document name; value: text of the document
+     for w in value:
+     	emit(length(w), 1)
+
+ reduce(key, values):
+ 	# key: a word; value: an iterator over counts
+    result = 0
+    for w in values:
+        result += 1
+    emit(key, result)
+```
+
+Ovviamente input e output finale verranno memorizzate nel file system distribuito, mentre i risultati intermedi vengono memorizzati sul file system locale dei worker.
+
+Il nodo che coordina i worker è il Master. Ogni task può essere:
+
+- Idle: pronto ad essere eseguito ma non assegnato
+- In-progress: in esecuzione su un worker
+- Completato: terminato con successo e risultati pronti
+
+Quando un worker diventa disponibile il Master gli assegna immediatamente un **task idle** da eseguire.
+
+Dopo che un **Map Task** ha completato la sua esecuzione, deve generare dei file intermedi che saranno utilizzati dai **Reduce Task**.
+
+- Ogni **Map Task** scrive più file intermedi, chiamati **R file**, uno per ogni Reduce Task.
+
+- Quando il Map Task termina, comunica al Master:
+
+  - **La posizione** dei file intermedi (es. su HDFS o su un nodo specifico).
+  - **La dimensione** dei file intermedi.
+
+  Così il Master può pusharli ai reducer.
+
+Periodicamente il Master invia ping periodici ai Worker per verificare che siano attivi, se uno di essi non risponde allora è crashato e il Master può riassegnare i task ad altri Worker attivi.
+
+Si sceglie il numero di Map task M molto maggiore del numero di nodi del cluster così che ogni nodo possa eseguire più Map Task in parallelo e migliora il load balancing. Il numero di Map Task viene determinato dal numero di chunk Distribuited File System (DFS) quindi per esempio se ci sono per un file 100 chunks allora 100 Map Tasks. 
+
+In genere il numero di Reduce Task R è più piccolo di M perchè l'output del Reduce verrà scritto su R file e se ce ne sono troppi è inefficace, inoltre i Reduce Task raccolgono più dati per produrre un risultato più aggregato.
+
+slide 38
 
 
-slide 
+
+
 
 skip da hadoop fino  a matrix-vector multiplication
 

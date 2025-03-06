@@ -53,19 +53,79 @@ Libri seconda parte: vedi syllabus, tutti scaricabili
 - Due prove in itinere, una per parte, esercizi teorici e pratici, chi supera 18 di media allora verrà proposto il voto con aggiunta di un bonus
 - Scritto con orale
 
+## 2  Teoria dell'informazione classica
+
+### 2.1  ..
+
+Consideriamo un canale che ha una sua probabilità di errore, strettamente compresa tra 0 e 1.
+$$
+0 < f < 1
+$$
+Vogliamo trasmettere un messaggio, quindi ogni bit viene trasmesso uno per uno e ogni bit ha probabilità di errore pari a $f$. Ovviamente non ci interessano i casi estremi perchè sarebbe un canale perfetto. Abbiamo sender e receiver. Questo si chiama canale binario simmetrico, dove se il sender manda un bit allora c'è una probabilità pari a $1-f$ che il receiver riceva lo stesso valore del bit, e una probabilità $f$ che riceva il bit alterato.
+
+Supponiamo che $f=0.1$, significa che un bit su 10 è alterato e non sappiamo quali sono alterati. In un contesto di trasmissioni multiple, tale probabilità è inaccettabile. Mandare semplicemente i bit è la decodifica identità. Una possibile soluzione è utilizzare i codici di ripetizione: attualmente stiamo codificando ogni bit con un bit, piuttosto adesso ogni bit lo codifico con 3 bit. Ovviamente scegliamo un numero dispari per evitare parità.
+
+Supponiamo di voler mandare la stringa 0110, usando il codice di ripetizione con ripetizione 3 allora definisco
+
+​	$R_3$ codice di ripetizione con $n=3$, si ha: $000\ 111\ 111\ 000$
+
+Utilizziamo la decodifica della maggioranza, se ho $n=3$ ragiono per chunk di 3 bit, ogni 3 bit considero la maggioranza, e per la decodifica assegno il bit più presente. Qualora si verificassero errori, è meno probabile che nel chunk si verifichino così tanti errori da alterarne la maggioranza, ma è davvero scomodo: moltiplico per un fattore pari a $n$ il numero di bit da inoltrare rispetto la decodifica identità, e comunque qualche errore ce lo ritroviamo perchè non li correggiamo. 
+
+In questo contesto, la probabilità di errore è pari a quando si verificano nella singola tripletta 2 o 3 errori.
+$$
+P(E)= \sum_{i=2}^3\binom3i f^i(1-f)^{3-i}=    \binom{3}{2}f^2(1-f)\ +\ f^3 = \\\
+= 3f^2-3f^3+f^3 = 3f^2-2f^3 \approx O(n^2)
+$$
+La sequenza è:
+
+​	$b$ $\rightarrow$ Encorder $\rightarrow$ $S_b$ $\rightarrow$ Canale rumoroso $\rightarrow$ $S'_b$ $\rightarrow$ Decoder $\rightarrow$ $b'$
+
+E quindi $P(E)=P(b\ne b')$.
+
+In questo modo, prima avevamo una probabilità del 10% di errore, adesso 0.01%. Potremmo pensare: facile, aumentiamo $n$. 
+Consideriamo anche che l'analisi che stiamo facendo fa riferimento a un canale simmetrico, qualora per esempio il sender dimentichi di mandare un bit potremmo avere un disastro.
+
+Generalizzando possiamo definire $R_N$, si ha $P(E_N)=\sum_{i=\frac{n+1}{2}}^N \binom Ni f^i(1-f)^{N-i} \approx O(f^{\frac{n+1}{2}})$.
+L'errore non decresce linearmente, notiamo che aggiungendo bit inizia ad essere sempre meno vantaggioso aggiungere ridondanza. Per un errore circa zero dovremmo avere ridondanza infinita e non va bene.
+
+Ancora, se definissimo $R_9$ si ha $P(E_9)\approx O(f^5)$.
+
+Cambiamo approccio, definiamo $R^2_3$, per esempio pensiamo di mandare 1101, se applico $R_3$ due volte ricorsivamente ottengo un codice lungo come $R_9$, ma stavolta il decoder è più efficiente perchè prima legge la stringa da 9 bit divisa per 3 chunk, e poi sui 3 chunk nuovamente calcola la maggioranza e ha decodificato il bit.
+
+Dato $E_{R^2_3}$, si ha $P(E_{R^2_3})=\sum_{i=2}^3\binom3i p^i(1-p)^{3-i} \approx f^4$ perchè $p\approx f^2$. Quindi comunque è peggio di $R_9$.
+
+Definiamo il tasso di trasmissione dei bit (rate), quindi il rapporto tra numero di bit che vogliamo inviare e il numero di bit effettivamente inviati. Con $R_9$ avremmo un rate pari a $\frac19$. 
+
+Possiamo quindi utilizzare il **codice di Hamming (7,4)**:
+
+- Sequenza da mandare $S_1 S_2 S_3 S_4 $ con $t_1t_2t_3$. Qui il rate in effetti è $\frac47$.
+- Immagino di avere 3 cerchi a diagramma di Venn. Nelle 4 intersezioni inseriamo i 4 bit da mandare, mentre le tre t le inserisco nei campi senza intersezione
+- Scelgo $t_1$ tale che $S_1+S_2+S_3+t_1= 0 \mod 2$
+- In formula ci stanno le $S$ che fanno parte dello stesso cerchio di $t_1$
+- Procedo analogamente per le altre $t$, sostanzialmente sono bit di parità e quell'operazione è XOR.
+
+Quindi avremmo per $1101$ bit di parità $000$. Trasmettiamo nel canale inaffidabile, e riceviamo $1001\ 000$. Facendo il disegno notiamo che i bit di parità non funzionano, e dobbiamo fare il cambiamento che sistemi la situazione col minor numero di modifiche. Due cerchi su tre sono a posto, pertanto il cerchio okay non deve essere toccato. In effetti, notiamo che possiamo correggere l'intersezione, ripristinando la parità.
+
+Se i primi due cerchi non sono corretti possiamo definire il codice sindrome classificando i cerchi scorretti, qui è $110$. Con sindrome $000$, allora tutto a posto. 
+
+E se ci fosse più di un errore? Ipotizziamo di ricevere $1011\ 000$ e disegnamo il diagramma di Venn
+
+- Notiamo che il terzo cerchio non è corretto e la sindrome è $001$
+- Esiste un modo per azzerare la sindrome, ed è porre $t_3 =1$
+- Secondo l'algoritmo di decodifica la soluzione sarebbe $1011\ 001$
+- Ma in realtà avevamo mandato $1101\ 000$
+
+La probabilità di errore associata a questo metodo è definito dall'evento $E_H$ dove la sequenza delle $S$ viene ricevuta scorrettamente. Si ha:
+$$
+P(E_H)=\sum_{i=2}^7\binom7i f^i(1-f)^{7-i} \approx f^2
+$$
+Riusciamo a gestire un solo errore, con più errori è un disastro. La cosa buona è che abbiamo migliorato il tasso di trasmissione. Sembrerebbe che se volessimo un tasso di errore basso, dovremmo avere anche un tasso di trasmissione bassissimo, e non va bene perchè stiamo decidendo tra affidabilità ed efficienza. Questo problema venne risolto da Shannon, garantendo tassi di errore infinitesimali.
 
 
 
 
 
-
-
-
-
-
-
-
-
+## 3  Teoria dell'informazione quantistica
 
 
 
