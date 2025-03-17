@@ -1,6 +1,0 @@
-# Machine Learning
-
-[TOC]
-
-## 1  Introduzione
-
