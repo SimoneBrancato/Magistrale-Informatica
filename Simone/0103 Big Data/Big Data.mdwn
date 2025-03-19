@@ -503,9 +503,127 @@ Trick: permutare le righe in realtà non è così immediato, possiamo usare anch
 
 ## Lezione 5 - Locality Sensitive Hashing
 
+La Locality Sensitive Hashing (LSH) si basa sull'idea fondamentale di generare un *sketch* per ogni oggetto soddisfi due proprietà principali:
 
+1. Deve essere molto più corto rispetto al numero totale di caratteristiche ($d$) dell'oggetto originale
+2. La similarità tra due vettori di caratteristiche viene trasformata in una relazione di uguaglianza tra i loro *sketch*. In altre parole, se due oggetti sono simili nello spazio originale, avranno una probabilità elevata di essere rappresentati dallo stesso *sketch* dopo l'hashing
 
+Si basa sulla randomizzazione, il che significa che non garantisce risultati esatti, ma è corretto con alta probabilità. Questo approccio probabilistico è spesso l'unica soluzione praticabile quando si lavora con dataset di grandi dimensioni, dove un confronto esatto sarebbe troppo costoso in termini di tempo e risorse.
 
+Un altro vantaggio chiave è la capacità di garantire un accesso locale ai dati, rendendolo particolarmente efficiente in ambienti distribuiti o quando i dati vengono letti da disco. Questo aspetto è cruciale per migliorare le prestazioni in sistemi Big Data, dove la latenza dell'accesso ai dati può rappresentare un collo di bottiglia significativo.
+
+Nel caso della *Hamming distance*, consideriamo vettori $p$ e $q$ composti da features binarie. La distanza di Hamming tra questi due vettori, indicata come $D(p, q)$, è definita come il numero di posizioni in cui i due vettori differiscono.
+
+Per applicare la *Locality Sensitive Hashing*, definiamo una funzione di hash $h$ che seleziona un sottoinsieme $I$ con $r$ coordinate casuali dal vettore originale. L'output della funzione di hash è la proiezione del vettore originale sulle coordinate scelte. Ad esempio, se scegliamo $r = 2$ e il sottoinsieme di indici è $I = \{1,4\}$, allora per un vettore $p = 01011$, la sua versione compressa sarà data solo dai valori nelle posizioni 1 e 4, ovvero $h(p) = 01$. Questo approccio consente di ridurre la dimensionalità del problema poiché quelli con una distanza di Hamming ridotta avranno una maggiore probabilità di condividere lo stesso valore di hash.
+
+Una proprietà chiave della Locality Sensitive Hashing nel caso della distanza di Hamming è la probabilità che due vettori $p$ e $q$ abbiano lo stesso valore di hash in base alla selezione casuale delle coordinate.
+
+Questa probabilità è data da:
+$$
+Pr[\text{picking } x : p[x] = q[x]] = \frac{d - D(p, q)}{d}
+$$
+Dove $d$ è la dimensione totale dei vettori binari, $D(p, q)$ è la distanza di Hamming.
+
+Questa formula indica che la probabilità di selezionare una coordinata in cui $p$ e $q$ coincidono dipende direttamente dalla loro similarità: maggiore è il numero di bit uguali tra i due vettori, maggiore sarà la probabilità che la funzione di hash li assegni allo stesso *bucket*.
+
+Possiamo quindi definire:
+$$
+P[h(p)=h(q)]=\Bigg(1-\frac{D(p,q)}{d}\Bigg) ^r = S^r
+$$
+Dove $S^r$ è la similarity tra i due vettori. Possiamo controllare questa probabilità variando il numero di coordinate selezionate, cioè $r$. Se $r$ è piccolo, la probabilità che due vettori simili vengano mappati allo stesso valore di hash è più alta. Se $r$ è grande, la discriminazione aumenta e i vettori con anche piccole differenze saranno più facilmente separati e possiamo ridurre i falsi positivi. 
+
+Per ridurre i **falsi negativi** nella LSH possiamo ripetere il processo di hashing più volte utilizzando il concetto di *banding*. L'idea è di eseguire il hashing $b$ volte, ognuna con una proiezione indipendente del vettore.
+
+Si ripetono $b$ volte le proiezioni di hash $h_i(p)$, ognuna scegliendo $r$ coordinate casuali.
+
+1. Si costruisce una funzione aggregata $g(p) = \langle h_1(p), h_2(p), \dots, h_b(p) \rangle$.
+2. Due vettori $p$ e $q$ vengono considerati *matching* se almeno una delle funzioni di hash $h_i$ produce lo stesso valore per entrambi.
+
+Per esempio, impostiamo $r = 2$ e $b = 3$, e consideriamo due vettori:
+
+- $p = 01001$
+- $q = 01101$
+
+Definiamo tre gruppi di coordinate:
+
+- $I_1 = \{3,4\}$ → $h_1(p) = 00$, $h_1(q) = 10$
+- $I_2 = \{1,3\}$ → $h_2(p) = 00$, $h_2(q) = 01$
+- $I_3 = \{1,5\}$ → $h_3(p) = 01$, $h_3(q) = 01$
+
+Dal risultato si nota che $h_3(p) = h_3(q)$, quindi almeno una funzione di hash ha prodotto lo stesso valore. Ciò significa che $p$ e $q$ vengono considerati simili.
+
+Se aumentassimo $b$ riduciamo la probabilità di falsi negativi. Questo avviene perché, anche se una funzione di hash fallisce nel riconoscere la similarità, altre potrebbero riuscirci.
+
+La funzione aggregata $g(p)$ è costituita da $b$ funzioni di hash indipendenti $h_i$. Per calcolare la probabilità che due vettori $p$ e $q$ **non siano considerati simili** (ossia che nessuna delle funzioni di hash produca lo stesso valore), si procede come segue:
+$$
+Pr[p \text{ non-simile } q] = Pr[h_i(p) \neq h_i(q), \forall i=1, \dots, b]
+$$
+Dato che gli hash sono indipendenti, la probabilità di fallire in tutti i $b$ tentativi è data dal prodotto delle singole probabilità di fallimento:
+$$
+Pr[p \text{ non-simile } q] = (Pr[h_i(p) \neq h_i(q)])^b = (1-Pr[h_i(p) = h_i(q)])^b
+$$
+La funzione probabilistica che descrive la probabilità che due vettori $p$ e $q$ siano considerati simili in LSH segue una **S-curve**, data dalla formula:
+$$
+Pr[\text{p simile a q}] = 1 - (1 - s^r)^b
+$$
+Dove:
+
+- $(1 - s^r)$ è la probabilità che una singola band **fallisca** nel riconoscere $p$ e $q$ come simili.
+- $(1 - s^r)^b$ è la probabilità che **tutte** le $b$ bands falliscano nel riconoscere la similarità.
+- Sottraendo il risultato da 1, otteniamo la probabilità complessiva che **almeno una** delle bands riconosca $p$ e $q$ come simili.
+
+Quando $s$ è molto alto (cioè i vettori sono molto simili), la probabilità di riconoscerli come tali è molto alta. Viceversa, quando $s$ è molto basso la probabilità di considerarli simili si riduce drasticamente. L'andamento della funzione crea una curva a "S", mostrando una transizione netta tra vettori considerati simili e vettori considerati diversi. Nella situazione ideale, vorremmo che una volta raggiunta la threshold si consideri automaticamente la similarità. In casi reali, invece, abbiamo anche falsi negativi e falsi positivi, identificati nel grafico dalle aree arancioni e verdi.
+
+![](.\img\scurve.png)
+
+L'area arancione sono i falsi negativi, mentre quella verde sono i falsi positivi. La linea rossa è la threshold.
+
+Demo: https://www.desmos.com/calculator/lzzvfjiujn
+
+**Es.1**	Immaginiamo di avere:
+
+- **100.000 documenti**, rappresentati come **100.000 colonne** di una matrice $M$.
+- **Firma MinHash** di **lunghezza 100** (100 righe per ogni colonna).
+- **Soglia di similarità desiderata**: $s = 0.8$.
+- Parametri LSH: $b = 20$, $r = 5$
+
+Immaginiamo che le colonne $C_1, C_2$ abbiano similarità $0.8$, significa che vogliamo che vengano classificate come simili, quindi almeno una band dovrebbe essere uguale.
+$$
+Pr[match\ in\ una\ band\ particolare]=s^r=0.8 ^5=0.328
+$$
+Quindi:
+$$
+Pr[nessun\ match \ in\ 20\ band] = (1-0.328)^{20}=0.00035
+$$
+Elementi con similarità almeno 0.8 saranno classificati come simili nel 99.965% dei casi.
+
+**Es.2**	Prendiamo lo stesso esempio ma considerando che le due colonne abbiano in effetti similarità $0.3$, pertanto non le vorremmo considerare coppie candidate. In questo caso si ha:
+$$
+Pr[match\ in\ una\ band\ particolare]=s^r=0.3 ^5=0.00243
+$$
+Ne segue che 
+$$
+Pr[nessun\ match \ in\ almeno \ una \ band] = 1-(1-0.00243)^{20}=0.0474
+$$
+Quindi avremo comunque il 4,75% di possibilità di classificarli lo stesso come coppie candidate, quindi falsi positivi.
+
+Vediamo adesso l'algoritmo generale per la LHS.
+
+1. **Calcolo delle firme hash**: per ogni vettore di features $p$, si calcola la sua **firma di hashing** basata sulle $b$ *bands*:
+
+$$
+g(p) = \langle h_1(p), h_2(p), ..., h_b(p) \rangle
+$$
+
+​	dove ogni $h_i(p)$ rappresenta l'hash del vettore sulla i-esima band. Si dice $Sketch(p)$.
+
+2. **Creazione dei clustering $C_i$**: per ogni **band** $i$ ($i = 1, 2, ..., b$) si creano **cluster** raggruppando insieme i vettori $p$ e $q$ che hanno almeno uno stesso valore hash $h_i(p) = h_i(q)$. Si dice $Sort$.
+
+3. **Costruzione del grafo dei candidati**: si crea un **grafo non orientato**, in cui ogni vettore $p$ è un nodo. Si crea un collegamento tra due nodi $p$ e $q$ **se almeno una band li ha raggruppati insieme** in un cluster $C_i$.
+
+4. **Individuazione delle componenti connesse**: il grafo viene analizzato per trovare **componenti connesse**, che rappresentano gruppi di vettori considerati simili.
+
+Il prossimo step è ottimizzare LHS, quindi il passaggio di LHS Tuning. Vogliamo impostare $M, b, r$ così da considerare tutte le coppie con firme simili (riducendo i falsi negativi) ed eliminare la maggior parte delle coppie che non sono simili (riducendo i falsi positivi). Ricordiamo che $b$ è il numero di funzioni hash applicate, $r$ il numero di features incluse nella proiezione, $M$ la matrice.
 
 
 
@@ -514,4 +632,10 @@ Trick: permutare le righe in realtà non è così immediato, possiamo usare anch
 ## Lezione 6 - LSH Tuning
 
 
+
+
+
+
+
+https://colab.research.google.com/drive/1FTVN0dvm-eCGSEIF0d7x3i-PH7BM8yJb?usp=sharing
 
