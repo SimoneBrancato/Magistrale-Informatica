@@ -623,17 +623,99 @@ $$
 
 4. **Individuazione delle componenti connesse**: il grafo viene analizzato per trovare **componenti connesse**, che rappresentano gruppi di vettori considerati simili.
 
-Il prossimo step è ottimizzare LHS, quindi il passaggio di LHS Tuning. Vogliamo impostare $M, b, r$ così da considerare tutte le coppie con firme simili (riducendo i falsi negativi) ed eliminare la maggior parte delle coppie che non sono simili (riducendo i falsi positivi). Ricordiamo che $b$ è il numero di funzioni hash applicate, $r$ il numero di features incluse nella proiezione, $M$ la matrice.
-
 
 
 
 
 ## Lezione 6 - LSH Tuning
 
+Il prossimo step è ottimizzare LHS, quindi il passaggio di LHS Tuning. Vogliamo impostare $M, b, r$ così da considerare tutte le coppie con firme simili (riducendo i falsi negativi) ed eliminare la maggior parte delle coppie che non sono simili (riducendo i falsi positivi). Ricordiamo che $b$ è il numero di funzioni hash applicate (ridurre falsi negativi), $r$ il numero di features incluse nella proiezione (ridurre falsi positivi), $M$ la matrice.
+
+<img src=".\img\scurve2.png" style="zoom:80%;" />
+
+Le funzioni locality-sensitive (LSH) sono un insieme di funzioni progettate per distinguere coppie di elementi vicini da quelle lontane in uno spazio di similarità, con l'obiettivo di ridurre il costo computazionale della ricerca di elementi simili. 
+
+Oltre alla MinHash vista in precedenza, esistono altre famiglie di funzioni LSH che soddisfano tre condizioni fondamentali:
+
+1. **Priorità ai vicini**: le coppie di elementi con una distanza ridotta devono avere una probabilità più alta di essere considerate simili rispetto a coppie con distanza elevata.
+2. **Indipendenza statistica**: è necessario stimare la probabilità che due o più funzioni locality-sensitive restituiscano la stessa risposta per una coppia di elementi, garantendo che i risultati non siano casuali ma statisticamente significativi.
+3. **Efficienza computazionale**: l'identificazione delle coppie candidate deve avvenire in un tempo molto inferiore rispetto a quello richiesto per calcolare tutte le distanze tra le coppie possibili. Le funzioni devono essere combinabili riducendo sia i falsi positivi che i falsi negativi.
+
+Questi principi permettono di progettare algoritmi efficienti per la ricerca approssimata di elementi simili in grandi dataset.
+
+Una funzione locality-sensitive è una funzione che prende in input due elementi e decide se questi devono essere considerati una **coppia candidata**
+
+- Se $f(x) = f(y)$ → $x$ e $y$ sono una **coppia candidata**.
+- Se $f(x) \neq f(y)$ → $x$ e $y$ **non** sono una coppia candidata.
+
+Un insieme di queste funzioni viene chiamato **famiglia di funzioni locality-sensitive**.
+
+Si dice che una famiglia di funzioni $F$ è $(d_1, d_2, p_1, p_2)$-sensibile se, per ogni funzione $f$ appartenente a $F$:
+
+- Se $d(x,y)\le d_1$, allora la probabilità che $f(x) = f(y)$ è almeno $p_1$ (alta probabilità candidati)
+- Se $d(x,y)\ge d_2$, allora la probabilità che $f(x) = f(y)$ è al massimo $p_2$ (bassa probabilità candidati)
+
+Nel caso della LHS con MinHash abbiamo:
+
+- **S** = insieme di tutti i possibili insiemi.
+- **d** = distanza di Jaccard, definita come $d(x, y) = 1 - J(x, y)$, dove $J(x, y)$ è la similarità di Jaccard.
+- **H** = famiglia di funzioni di Min-Hash generate da tutte le possibili permutazioni delle righe
+
+Per ogni funzione di hash $h$ appartenente alla famiglia $H$:
+$$
+Pr[h(x) = h(y)] = 1 - d(x, y)
+$$
+Pertanto meno sono distanti più è probabile che siano considerati candidati.
+
+Quando si utilizza la **distanza di Jaccard**, la famiglia di funzioni di MinHash è $(d_1, d_2, 1 - d_1, 1 - d_2)-$sensibile, il che significa che la probabilità di collisione tra due elementi dipende direttamente dalla loro similarità di Jaccard, e questo con $0<d_1<d_2<1$. Per altre distanze non c'è garanzia che sia locality-sensitive. 
+
+La famiglia MinHash **H** è una famiglia $(\frac13, \frac23, \frac23, \frac13)-$sensibile per l’insieme **S** e la distanza di Jaccard **d**.
+Ciò significa che se la distanza di Jaccard tra due insiemi è  $<\frac13$, la probabilità che abbiano lo stesso valore di MinHash è $>\frac23$, altrimenti se la distanza di Jaccard tra due insiemi è$>\frac23$, la probabilità che abbiano lo stesso valore di MinHash è $<\frac13$.
+
+L'effetto **"S-Curve"**, osservato nel caso di **MinHashing con la tecnica delle bande**, può essere generalizzato a qualsiasi famiglia di funzioni **Locality-Sensitive**. La tecnica delle bande utilizzata per le **matrici delle firme** si applica anche in contesti più generali. Infatti, è possibile eseguire **Locality-Sensitive Hashing (LSH)** con qualsiasi famiglia $(d_1, d_2, 1 - d_1, 1 - d_2)-$sensibile. 
+
+In effetti possiamo applicare due metodologie:
+
+- **AND-Construction:** costruiamo una nuova famiglia di funzioni $F'$ dove ogni funzione $f$ è costruita da $r$ membri di $F$ per qualche $r$ fissato. Si ha che $f(x)=f(y)$ se e solo se le funzioni in famiglia coincidono tutte! Questo abbassa la probabilità dei falsi positivi ma aumenta i falsi negativi, pertanto stiamo in generale abbassando tutte le probabilità. La nuova famiglia $F'$ sarà $(d_1, d_2, p_1^r, p_2^r)-$sensibile.
+
+  La probabilità che due funzioni hash restituiscano lo stesso valore per una coppia di elementi è approssimativamente il **prodotto** delle probabilità individuali. Tuttavia, due funzioni hash specifiche potrebbero essere **altamente correlate**. Nonostante questa possibile correlazione le probabilità di successo sono calcolate considerando **tutte le possibili funzioni hash nella famiglia** $H$ quindi nel caso medio funziona.
+
+- **OR-Construction:** costruiamo una nuova famiglia di funzioni $F'$ dove ogni funzione $f$ è costituita da $b$ membri di $F$ per un certo $b$ fissato. Si ha che $f(x)=f(y)$ se anche solo una funzione coincide! La nuova famiglia sarà $(d_1, d_2, 1-(1-p_1)^r, 1-(1-p_2)^r)-$sensibile. Questo rende l'algoritmo più permissivo, stiamo riducendo i falsi negativi ma rischiamo di aumentare i falsi positivi (ovviamente, stiamo in qualche modo aumentando tutte le probabilità)
+
+Le costruzioni **AND** e **OR** in LSH possono essere combinate in sequenza per ottenere un miglioramento significativo nel controllo delle probabilità di selezione. Questo approccio consente di avvicinarsi a una distinzione perfetta tra coppie simili e non simili. Possiamo ridurre drasticamente la probabilità di selezionare coppie non simili (falsi positivi) rendendo le probabilità basse praticamente nulle, ed aumentare la probabilità di selezionare coppie simili (veri positivi), facendo in modo che le probabilità siano molto vicine a 1.
+
+**Es.**	$(0.2, 0.8, 0.8, 0.2)-$sensitive, con $b=4$ e $r=4$. 
+
+Questa è una configurazione iniziale della famiglia LSH, la probabilità che due elementi simili vengano selezionati come candidati è **0.8**, mentre la probabilità che due elementi non simili vengano selezionati è **0.2**. 
+
+- **AND-OR**: la probabilità per le **coppie simili** dopo l'operazione **AND** si riduce.
+  $$
+  P_{\text{simili AND}} = 0.8 \times 0.8 = 0.64
+  $$
+  La probabilità per le **coppie non simili** dopo l'operazione **AND** si riduce anch'essa:
+  $$
+  P_{\text{non simili AND}} = 0.2 \times 0.2 = 0.04**OR**
+  $$
+  Adesso applichiamo la costruzione **OR**, la probabilità per le coppie simili aumenta.
+  $$
+  P_{\text{simili OR}} = 1 - (1 - 0.64)^4 \approx 0.878
+  $$
+  La probabilità per le coppie non simili diminuisce:
+  $$
+  P_{\text{non simili OR}} = 1 - (1 - 0.04)^4 \approx 0.0064
+  $$
+
+​	Quindi è diventato $(0.2, 0.8, 0.9936, 0.1215)-$sensitive. 
+​	Analogamente possiamo calcolare gli altri casi in sequenza dopo il risultato appena raggiunto.
+
+- **OR-AND**: $(0.2, 0.8, 0.9936, 0.1215)-$sensitive
+- **OR-AND**: $(0.2, 0.8, 0.9999996, 0.0008715)-$sensitive
+
+Demo: [Locality Sensitive Hashing — Threshold + Banding Exploration | Desmos](https://www.desmos.com/calculator/lzzvfjiujn?lang=it)
 
 
 
+slide 18 - Distance Measures
 
 
 
