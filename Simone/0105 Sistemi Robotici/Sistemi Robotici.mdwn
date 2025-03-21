@@ -420,29 +420,412 @@ Nella realtà dopo un calcio al carrello questo si fermerà in un tempo finito, 
 
 
 
+## Lezione 3 - Implementare un Generico Sistema Dinamico
+
+Ogni sistema reale è un oggetto con un finito numero di gradi di libertà che evolve nel tempo in accordo ad una certa legge. Può essere rappresentato come una black box che può essere stimolata dall'esterno con un input $u(t)$ e che produce un effetto in output $y(t)$. Il comportamento come detto è rappresentato da una funzione $f$, pertanto l'intero sistema può essere descritto in legge come $y(t)=f(u(t))$.
+
+Un sistema dinamico è un sistema fisico dove, dato un certo istante di tempo $t$, l'output $y(t)$ dipende dal valore corrente $u(t)$ e dal passato valore di $u(t)$ (e di conseguenza del vecchio output $y(t)$). 
+
+Un sistema dinamico a tempo continuo si descrive come un'equazione differenziale nel dominio del tempo.
+$$
+y = f(\dot y, \ddot y, ..., u, \dot u, \ddot u, t)
+$$
+
+- L'ordine di un sistema è la più alta derivata presente nella funzione.
+
+- Un sistema lineare è descritto da equazioni differenziali lineari.
+- Se i coefficienti sono costanti (cioè non dipendono dal tempo) il sistema si dice invariante nel tempo.
+
+**Es.**	Consideriamo $\dot y+3y = 5u$. Possiamo implementarlo discretizzando:
+$$
+\frac{y(t+\Delta T)-y(t)}{\Delta T}+3y(t)= 5u(t) \\
+...\\
+y(t+\Delta T)=y(t)*(1-3\Delta T)+5\Delta T* u(t)
+$$
+
+```python
+class MySystem:
+    
+    def __init__(self):
+    	self.y = 0
+        
+    def evaluate(self, delta_t, _input):
+        self.y = self.y * (1 - 3 * delta_t) + 5 * delta_t * _input
+        return self.y
+```
+
+**Es.**	Consideriamo adesso $\ddot y + 3\dot y + y = 5u$. Notiamo che è di secondo grado, per procedere potremmo usare il rapporto incrementale della derivata seconda ma è troppo difficile. Possiamo usare un trucco, cioè rimuovere la derivata seconda e avere variabili che sono derivate massimo una volta.
+
+Quindi facciamo le seguenti posizioni:
+
+- $x_1=y$
+- $x_2=\dot y = \dot x_1$
+- $\dot x_2 = \ddot y$
+
+In questo modo otteniamo il seguente sistema di equazioni:
+$$
+\large
+\begin{cases} 
+\dot x_2+3 x_2 + x_1 = 5u\\
+\dot x_1=x_2
+\end{cases}
+$$
+Riordinando:
+$$
+\large
+\begin{cases} 
+\dot x_2 =  -3 x_2 - x_1+5u\\
+\dot x_1=x_2
+\end{cases}
+$$
+Adesso discretizziamo le due derivare riscrivendole come rapporto incrementale:
+$$
+\Large
+\begin{cases} 
+\frac{x_2(t+\Delta T)-x_2(t)}{\Delta T} =  -3 x_2(t) - x_1(t)+5u(t)\\
+\frac{x_1(t+\Delta T)-x_1(t)}{\Delta T}=x_2
+\end{cases}
+$$
+
+
+E riordiniamo:
+$$
+\large
+\begin{cases}
+x_1(t+\Delta T)=x_1(t)+x_2(t)\Delta T \\
+x_2(t+\Delta T)= x_2(t)-3\Delta Tx_2(t)-\Delta Tx_1(t)+5\Delta Tu(t)
+\end{cases}
+$$
+
+```python
+class SecondOrderSystem:
+    
+    def __init__(self):
+        self.x1 = 0
+        self.x2 = 0
+        
+    def evaluate(self, delta_t, _input):
+        new_x1 = self.x1 + delta_t * self.x2
+        new_x2 = (1-3*delta_t)*self.x2-delta_t*self.x1+5*delta_t*_input
+        
+        self.x1 = new_x1
+        self.x2 = new_x2
+        
+        return self.x1
+```
+
+Esempi:
+
+- `examples/systems/second_order.ipynb` con $\ddot y + 3 \dot y + y = 5u$
+
+  ![](C:\Users\simon\Desktop\Magistrale-Informatica\Simone\0105 Sistemi Robotici\img\1.png)
+
+- `examples/systems/second_order_2.ipynb` con $\ddot y + 3 \dot y + 10y = 5u$
+
+  ![](C:\Users\simon\Desktop\Magistrale-Informatica\Simone\0105 Sistemi Robotici\img\2.png)
+
+- `examples/systems/second_order_3.ipynb` $\ddot y + 3 \dot y - 10y = 5u$
+
+![](C:\Users\simon\Desktop\Magistrale-Informatica\Simone\0105 Sistemi Robotici\img\3.png)
+
+**ESERCIZI ASSEGNATI SLIDE 14** - https://www.dmi.unict.it/santoro/teaching/sr/slides/ImplementationDynamic.pdf
 
 
 
+## Lezione 4 - Principi di Sistemi di Controllo
+
+Immaginiamo di avere un carrello con una certa velocità $v(t)$, una forza generata dai motori $f(t)$, e una certa forza contraria data dall'attrito dell'aria $v(t)b$. Il sistema viene descritto da:
+$$
+\begin{cases}
+\dot v = -\frac bMv+\frac 1M f \\
+\dot p=v
+\end{cases}
+$$
+Se consideriamo l'uso di una forza costante $F$ e il carrello è fermo all'istante $t=0$ possiamo risolvere l'equazione:
+$$
+\large
+v(t)= \frac Fb (1-e^{-\frac bMt})\\
+p(t)= \frac Fb(1-e^{-\frac bMt})t
+$$
+Adottando un approccio algoritmico:
+
+- Qual è la forza $f$ che bisogna applicare per permettere al carrello di viaggiare ad una velocità $\overline v$?
+  1. Misura la velocità corrente $v$
+  2. Calcola l'errore rispetto la velocità target $error = \overline v -v$
+  3. Usa una funzione appropriata che sia in grado di ridurre e cancellare l'errore
+  4. Applica la funzione
+  5. Ritorna allo step 1
+- A quale istante di tempo dobbiamo fermare il carrello per permettergli di fermarsi ad una posizione $\overline p$?
+  1. Misura la posizione corrente $p$
+  2. Calcola l'errore rispetto la posizione target $error = \overline p-p$
+  3. Usa una funzione appropriata che sia in grado di ridurre e cancellare l'errore considerando l'inerzia del corpo
+  4. Applica la funzione
+  5. RItorna allo step 1
+
+Gli algoritmi appena visti sopra possono essere rappresentati come il seguente schema:
+
+![](.\img\flow.png)
+
+Questo è il tipico schema per controllare i sistemi dinamici e viene chiamata architettura feedback. Il vantaggio è che l'esatto modello del sistema non è necessario ma solo il suo comportamento da un punto di vista qualitativo. Il problema risiede però nel blocco di controllo, che deve essere implementato appropriatamente.
 
 
 
+----
 
 
 
+Passiamo al  controllo di posizione. Possiamo le seguenti assunzioni:
+
+- Se siamo lontani dalla posizione  target (l'errore è ampio) possiamo applicare una funzione di correzione ampia
+- Man mano che ci avviciniamo al target è meglio ridurre la correzione applicata così che in futuro potremo fermare il carrello nella posizione corretta più facilmente
+
+Pertanto intuiamo che la funzione da applicare deve essere direttamente proporzionale all'errore
+$$
+F=K_P * error
+$$
+dove $K_P$ è una costante determinata sperimentalmente.
+
+Esempio: `examples/simple_control/cart_position_control.ipynb`
+
+![](.\img\k1.png)
+
+Per $K_P=1.0$ notiamo il carrello supera il target, e torna indietro. Intuiamo che è meglio abbassare la costante.
+
+![](./img\k02.png)
 
 
 
+Già notiamo che va meglio anche se ci mettiamo molto tempo. Quindi, in un Controller Proporzionale la velocità è controllata dalla costante $K_P$. Quindi, impostando correttamente la costante, avremo diverse oscillazioni. Inoltre, per ogni sistema c'è un certo limite $L$ per la costante oltre il quale il sistema oscilla. Non possiamo pretendere di avere un sistema che è veloce e non oscilla, ma bisogna avere un compromesso tra le due situazioni.
 
 
 
+-----
 
 
 
+Immaginiamo di utilizzare il precedente algoritmo per assicurarci che una palla raggiunga una certa posizione, per esempio $1000\ pix$.
+Esempio:  `examples/simple_control/godot_ball_position_control.ipynb`
+Vediamo i diversi effetti della costante $K_P$.
+
+<img src=".\img\k20.png" style="zoom:80%;" />
 
 
 
+Notiamo che la palla supera la posizione target e non torna indietro abbastanza da posizionarsi correttamente. Possiamo notare sperimentalmente che se impostiamo valori più bassi o non raggiungeremo mai il target, fermandoci prima, o avendo un comportamento simile a quello precedente. Ci si chiede perchè, ed è presto detto: la causa è la forza d'attrito statica, una volta che l'errore e la velocità sono sufficientemente piccoli allora la palla si bloccherà, ed in effetti in sistemi reali succede questo. 
 
 
+
+----
+
+
+
+Torniamo a parlare del carrello e di come avviene la gestione dell'errore.
+
+![](.\img\flow.png)
+
+Analizziamo il Controller, che come sappiamo viene rappresentato analiticamente dal fattore $K_P$, il fatto che la forza in output è definita da:
+$$
+out = K_P (target-current)
+$$
+implica che l'output dipende anche dall'errore, ma questa formula è esaustiva? Cosa succede se l'errore è altissimo? è chiaro che non possiamo avere una forza in output troppo grande. Ogni motore può fornire una certa forza massima applicata, in base alla sua potenza. Pertanto, dobbiamo includere nella nostra catena di controllo un saturatore, ovvero un blocco che limita l'output del Controller nell'intervallo $[MAX,-MAX]$ dove ovviamente $MAX$ è l'input limite del sistema. Banalmente si può implementare con degli `if` applicati all'output calcolato.
+
+Esempio: `examples/simple_control/cart_position_control_saturation.ipynb`
+
+![](.\img\satur.png)
+
+Ovviamente il saturatore potrebbe comportare un aumento del tempo di raggiungimento della posizione target. Dato che l'intento è quello di rappresentare modelli reali, è comunque uno strumento utile. 
+
+Vediamo il diverso comportamento del carrello, a destra con saturazione e a sinistra senza saturazione. 
+Si ha, con $K_P=1.0$ e $MAX = 0.5\ N$:
+
+![](.\img\consenza.png)
+
+
+
+----
+
+
+
+Vogliamo controllare la velocità del carrello. Stavolta piuttosto che collegare un sensore di posizione, abbiamo ovviamente un sensore di velocità collegato all'output $v$.
+
+![](C:\Users\simon\Desktop\Magistrale-Informatica\Simone\0105 Sistemi Robotici\img\vel.png)
+
+Ci chiediamo, il controller proporzionale è sufficiente a regolare correttamente la velocità? In formula:
+$$
+F = K_P * error
+$$
+Quando l'errore non è nullo dobbiamo muovere il carrello pertanto anche la forza generata non è nulla. Cosa succede se si raggiunge la velocità target? L'errore diventa zero, la forza diventa zero e il carrello si ferma. Ma ragionando analiticamente immaginiamo che il carrello si stia muovendo grazie alla forza $F$, e che ad un certo punto si raggiunga la velocità target $\overline v$. Con errore zero significa che la forza è abbastanza intensa da spingere il carrello alla giusta velocità, ciò significa che non dovremmo cambiare la forza applicata una volta raggiunta la velocità, deve piuttosto restare costante!
+
+Se l'errore è positivo e molto ampio dobbiamo incrementare molto la forza applicata così da prendere velocità. Se l'errore è positivo e piccolo, incrementiamo la forza di poco così da non superare la velocità target. Se invece abbiamo errore negativo significa che abbiamo superato la velocità target e dobbiamo ridurre la forza applicata. Infine, con errore zero, la forza deve restare costante.
+
+Pertanto, si dice che $F$ deve essere un accumulatore pesato dell'errore:
+$$
+F(k+1)=F(k)+const\cdot error(k)
+$$
+e questo consiste in un integrale. 
+$$
+F(t)=K_I\int_0^t error(\tau)d\tau
+$$
+Tale funzione è in grado di pesare il contributo dell'integrale in rapporto all'errore.
+**Esempio:** `examples/simple_control/cart_speed_control.ipynb`
+
+
+
+![](.\img\velint.png)
+
+![](.\img\klvel.png)
+
+
+
+Come notiamo, va troppo veloce, supera il target e decelera, possiamo fare di meglio.
+
+
+
+![](C:\Users\simon\Desktop\Magistrale-Informatica\Simone\0105 Sistemi Robotici\img\velgood.png)
+
+Già va meglio.
+
+Passiamo ora al controllo della velocità di una palla che rotola. Disponibili agli esempi:
+
+- `godot/rolling_ball`
+- `examples/simple_control/godot_ball_speed_control.ipynb`
+
+Come detto, l'integrale è un accumulatore dell'errore. La costante $K_I$ controlla il tasso di accumulazione, se è alto allora l'output del Controller incrementa velocemente, il che è buono quando l'errore è alto ma non va bene quando l'errore inizia ad essere basso. Similmente, basi valori della costante permettono al Controller di fornire output più piccoli in modulo, il che non va bene con errori ampi, ma è ottimo per errori piccoli.
+
+Possiamo combinare gli effetti dei Controller proporzionali e integrali! Infatti, il Controller proporzionale dipende da $K_P$, reagisce immediatamente e non ha memoria ed è buono quando l'errore è ampio. Al contrario, il Controller integrale dipende da $K_P \int$ e reagisce nel lungo termine perchè ha memoria. Può essere usato quando $P$ non ha più effetto (quindi quando l'errore è troppo piccolo) dato che nel frattempo ha accumulato potenza. 
+
+Un esempio: `examples/simple_control/godot_ball_speed_control_PI.ipynb`
+
+
+
+![](.\img\pi.png)
+
+
+
+Se poniamo $K_P=5$ e $K_I=0.5$ notiamo che la risposta iniziale è veloce, mentre quella a lungo termine un po' troppo lenta. Magari incrementiamo $K_I$.
+
+
+
+![](.\img\kilow.png)
+
+
+
+Ecco che settando $K_I=2.1$ la situazione migliora. Occhio però, se lo incrementiamo troppo causeremmo un superamento della velocità target, ed una conseguente decelerazione. Noi vogliamo sempre evitare le oscillazioni!
+
+
+
+![](C:\Users\simon\Desktop\Magistrale-Informatica\Simone\0105 Sistemi Robotici\img\kifast.png)
+
+
+
+Qualora impostassimo $K_P=1.5$ allora è chiaro che dovremmo impostare diversamente $K_I$. Il Controller proporzionale ovviamente rallenta la velocità iniziale, quindi l'integrale "accumula" di più. Dobbiamo decrementrarlo. Qui infatti otteniamo un risultato soddisfacente portando $K_I=0.7$
+
+
+
+![](.\img\kidiverso.png)
+
+
+
+Analizziamo il ruolo della saturazione. Anche qui può aiutarci, dato che il sistema non può superare determinati limiti ed è bene impostarli nella nostra simulazione. Ma l'uso del saturatore con un integrale ha effetti collaterali che vanno considerati.
+
+
+
+![](.\img\kisatur.png)
+
+
+
+Immaginiamo di voler impostare una saturazione pari a $90\ N$, con $K_P=1.5$ e $K_P=0.7$. La saturazione appare nella prima fase, infatti l'errore ampio causa una forza eccessiva. Come notiamo dal grafico vi è un eccesso, come mai?
+
+
+![](.\img\over.png)
+
+
+
+Ciò è dovuto al fatto che nella prima parte il Controller prova a spingere il sistema verso il target, ma c'è un limite oltre il quale il sistema non può andare. Quando il Controller tenta di superare questo valore, il termine integrale continua ad accumulare errore, causando un ritardo nel recupero del sistema e un overshoot significativo. Pertanto è bene utilizzare un'ottimizzazione detta Anti Wind-Up, che controlla se l'output è saturo e, in tal caso, evita di integrare l'errore finchè non siamo fuori dalla fase di saturazione. 
+
+Esempio: `examples/simple_control/godot_ball_speed_PI_sat_aw_control.ipynb`
+
+Notiamo che il sistema è in saturazione per meno tempo rispetto a prima (in casi reali è un bene anche perchè si genera meno calore, ovvero energia sprecata).
+
+
+
+![](.\img\antiwindup.png)
+
+
+
+Riassumendo, i sistemi si controllano adoperando il concetto di feedback. Un semplice controller proporzionale può essere utile ma non sempre basta, infatti se l'errore è zero abbiamo bisogno di un output costante cioè un integrale. Le azioni dei due controller possono essere combinate per avere performance migliori, visto che P agisce immediatamente e I lavora meglio sul lungo termine. La saturazione va implementata sempre, dato che in sistemi reali avremo sempre dei limiti da non oltrepassare!
+
+
+
+## Lezione 6 - Segnali canonici
+
+Nella **Teoria dei Sistemi**, si utilizzano alcuni segnali di ingresso specifici, chiamati **segnali canonici**, per studiare il comportamento di un sistema. Tra i principali segnali canonici troviamo:
+
+- **Impulso o Delta di Dirac**: un segnale ideale utilizzato per rappresentare un fenomeno fisico con grande intensità ma durata infinitesimale. Matematicamente si definisce come:
+  $$
+  \begin{cases}
+  \delta(t)=0,\ \forall t\ne 0\\
+  \delta (t)= +\infty,\ t=0 \\
+  \int_{-\infty}^\infty \delta(t)dt=1
+  \end{cases}
+  $$
+  
+
+- **Gradino (o Step Unitario) (u(t))**: si utilizza per modellare l'applicazione al tempo $t=0$ di uno stimolo costante ad un sistema. Matematicamente si descrive come:
+  $$
+  \begin {cases}
+  u(t)=0,\ \forall t<0\\
+  u(t)=1, \ \forall t\ge0
+  \end{cases}
+  $$
+  
+
+- **Rampa** è un segnale crescente utilizzato per descrivere l'applicazione ad un sistema al tempo $t=0$ di uno stimolo che cresce indefinitamente. Matematicamente:
+  $$
+  \begin{cases}
+  r(t)=0,\ \forall t<0\\
+  r(t)=t,\ \forall t\ge0
+  \end{cases}
+  $$
+
+Ci sono delle relazioni tra queste tre funzioni, infatti:
+$$
+u(t)=\int_o^t\delta(\tau)d\tau\ \ \ \ \rightarrow \ \ \ \ \frac{du(t)}{dt}=\delta(t)
+$$
+
+$$
+r(t)=\int_0^tu(\tau)d\tau\ \ \ \ \rightarrow \ \ \ \ \frac{dr(t)}{dt}=u(t)
+$$
+
+Dato un sistema lineare, se $y_d(t)$ è la risposta all'impulso, allora la risposta al gradino è:
+$$
+y_s(t)=\int_0^ty_d(\tau)d\tau
+$$
+e la risposta alla rampa è:
+$$
+y_r(t)=\int_0^ty_s(\tau)d\tau
+$$
+Dato un sistema di controllori le sue performances si misurano sulla base degli input canonici. Il gradino rappresenta un riferimento costante che viene applicato, mentre la rampa rappresenta un riferimento mobile che permette di misurare l'abilità del sistema di controllori di seguire riferimenti variabili nel tempo.
+
+La risposta ad un sistema asintoticamente stabile (vedremo più avanti cosa significa) ad un gradino è composto da due parti:
+
+- Transiente: la parte iniziale della risposta, l'output cambia nel tempo
+- Steady-State: quando finisce il transiente, l'output riporta piccoli cambiamenti o addirittura nessuno e si stabilizza ad un valore specifico. 
+
+In base al tipo di risposta (visualizzabile in figura) il transiente presenta diverse caratteristiche
+
+![](.\img\transientsteady.png)
+
+
+
+- Lo Steady-State Value si può indicare come $K=\lim_{t\rightarrow\infty}y(t)$
+- Il tempo di salita $T_S$ è il tempo richiesto per andare dal 10% al 90% di $K$
+- Il tempo di assestamento è il tempo richiesto per avere l'output attorno al 98% di $K$
+- La sovraelongazione $S$ è la percentuale di $K$ del primo picco dell'output, cioè $S=\frac{\text{peak}-K}{K}$
+
+
+
+![](.\img\sovr.png)
 
 
 
