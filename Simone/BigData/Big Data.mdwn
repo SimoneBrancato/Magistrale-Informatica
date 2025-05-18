@@ -1121,9 +1121,9 @@ Un multigrafo è un grafo dove dati due nodi ci sono più archi che vanno da uno
 
 Un grafo connesso è composto da nodi tutti mutualmente raggiungibili tra loro. Se è disconnesso, ha più di una componente connessa. Dicesi arco ponte un arco che rende il grafo disconnesso. Idem per i nodi detti punti di articolazione.
 
-Il diametro di un grafo è la massima distanza in shortest path tra una coppia qualsiasi di nodi del grafo.
+Il **diametro di un grafo** è la massima distanza in shortest path tra una coppia qualsiasi di nodi del grafo.
 
-Il coefficiente di clustering è compreso tra 0 e 1 ovvero:
+Il **coefficiente di clustering** è compreso tra 0 e 1 ovvero:
 $$
 C_i = \frac{2e_i}{k_i(k_i-1)}
 $$
@@ -1137,11 +1137,29 @@ Adottando il modello del grafo random, definiamo appunto un grafo con n nodi e o
 
 Sono risultati diversi dalla rete reale.
 
-Le network sono sorprendenti perchè già con 6 gradi di libertà possiamo passare da una qualunque persona all’altra nel mondo.
+Le network sono sorprendenti perchè in media già con 6 gradi di libertà possiamo passare da una qualunque persona all’altra nel mondo.
 
 
 
 ## Lezione 13 - Analisi di grandi grafi
+
+Il web è proprio questo, ma come risolviamo il problema del web search? Magari possiamo notare che pagine affidabili si puntano a vicenda. Per fare ciò si attua un page rank. Sostanzialmente una pagina è importante se ha tanti link sia entranti che uscenti, inoltre link da pagine importanti devono contare di più. Questo approccio è quindi ricorsivo e ogni voto (link) deve essere proporzionale all’importanza della pagina e inversamente proporzionale al numero di link uscenti. Quindi l’importanza della pagina si va a dividere nei vari flow di uscita.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
