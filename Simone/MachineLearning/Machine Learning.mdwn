@@ -6,19 +6,13 @@
 
 Il machine learning consiste in quel campo di studi che permette ai computer di imparare senza essere esplicitamente programmati. I relativi algoritmi sono in grado di apprendere come risolvere uno specifico problema a partire da un set di dati di esempio.
 
-Ci sono problemi che hanno un grado di incertezza, per esempio quando il problema è troppo difficile da modellare in maniera deterministica, come per esempio classificare un'immagine per definire se un oggetto è presente o determinare se una email è spam. Prendiamo quest'ultimo caso, possiamo analizzare il contenuto delle mail per determinare se sono ham o spam (come per esempio, se ha incoerenze, errori ortografici).
+Un computer apprende dall'esperienza rispetto un task se la misura delle performance migliorano con l'esperienza rispetto al task svolto.
 
-Generalmente siamo abituati a lavorare con dei dati in input, elaborati da un algoritmo, che forniscono un output. Stavolta vengono presi dati in input con associato il relativo output (etichetta), che vengono dati in input ad un algoritmo di learning, che fornirà in output un programma in grado di risolvere quel problema.
+Il task è il problema da risolvere. L'esperienza sono i dati, ognuno di essi è chiamato esempio. Le performance sono una misura che riesca a valutare se il modello è buono rispetto i dati in input, si definisce come $P(\{y^{(i)}\}^m_{i=1}, \{\hat y^{(i)}\}^m_{i=1})$, questo può essere alto o basso. Comunque sia $P\in[0,1]$, di conseguenza definiamo la misura dell'errore $1-P$. 
 
-Nel 1997 Tom Mitchel definì il problema del learning, ovvero definire cosa significa apprendere. Definì che un computer apprende da un'esperienza $e$ rispetto un task $t$ e una misura di performance $p$ se le performance $p$ misurate su $e$ migliorano con l'esperienza rispetto al task $t$. Quindi per capire se un algoritmo sta apprendendo dobbiamo misurare le performance.
+Per risolvere problemi di machine learning definiamo modelli statistici che dipendono dal task. Un esempio $x=(x_1, x_2, ..., x_d)$, e se ho tanti esempi definisco l'$i$-esimo esempio  $x^{(i)}=(x^{(i)}_1, x^{(i)}_2, ..., x^{(i)}_d)$. Le componenti $x_n$ vengono dette *features*. 
 
-Il task è il problema da risolvere, e vi è una doppia implicazione con un modello funzione parametrizzata $h$. L'esperienza sono i dati, ognuno di essi è chiamato esempio. Le performance sono una misura che riesca a valutare se il modello è buono rispetto i dati in input, si definisce come $P(\{y^{(i)}\}^m_{i=1}, \{\hat y^{(i)}\}^m_{i=1})$, questo può essere alto o basso. Comunque sia $P\in[0,1]$, di conseguenza definiamo la misura dell'errore $1-P$. 
-
-Per risolvere problemi di machine learning definiamo modelli statistici che dipendono dal task. Un esempio $x=(x_1, x_2, ..., x_d)$, e se ho tanti esempi definisco l'$i$-esimo esempio  $x^{(i)}=(x^{(i)}_1, x^{(i)}_2, ..., x^{(i)}_d)$. Per trasformare il vettore riga in vettore colonna basta fare la trasposta del vettore. Le componenti $x_n$ vengono dette in gergo *features*. 
-
-Tornando all'esempio delle mail, vediamo che è necessario attuare un processo di estrazione delle features, quindi trovare una rappresentazione $f(x)=\overline x$ dove $\overline x$ è l'insieme delle features estratte dall'esempio $x$. La rappresentazione è un vero e proprio programma che cerca, per esempio, di trovare errori ortografici e parole chiave dalla mail di spam. La funzione può essere o creata a mano o apprese.
-
-Osservato un problema è bene capire le caratteristiche importanti rispetto al task da risolvere, pertanto non esiste una rappresentazione universale. L'estrazione delle features mette in luce caratteristiche salienti dei dati trascurandone altri. Immaginiamo di avere un grafico con assi numero di parole chiave spam ed errori ortografici, possiamo aspettarci che email di spam abbiano tanti errori e parole chiave spam, diversamente quelle non spam. Definire il modello consiste nel tracciare la linea che separa le mail spam dalle mail ham.
+Osservato un problema è bene capire le caratteristiche importanti rispetto al task da risolvere, pertanto non esiste una rappresentazione universale. L'estrazione delle features mette in luce caratteristiche salienti dei dati trascurandone altri. Immaginiamo di avere un grafico con assi numero di parole chiave spam ed errori ortografici, possiamo aspettarci che email di spam abbiano tanti errori e parole chiave spam, diversamente quelle non spam.
 
 Gli attributi possono essere:
 
@@ -28,26 +22,33 @@ Gli attributi possono essere:
 I tipi di task sono:
 
 - **Classificazione:** prendere un input $x\in R^d$ e stabilire a quale categoria appartiene quindi $y \in \{1,...,k\}$ dove $k$ è il numero di classi. Vogliamo definire un classificatore $h_v(x)=y$ con $h:R^4 \rightarrow \{1,...,k\}$. Un altro esempio è determinare quante macchine sono presenti in un immagine, le classi sono i possibili output.
-- **Regressione:**  
+- **Regressione**
 
 Diversi sono anche i tipi di learning:
 
-- **Supervised Learning:** vengono dati in pasto all'algoritmo sia l'input che l'output associato, così vengono risolti classificazione e regressione. Nel caso dell'algoritmo KNN dobbiamo prendere k parametri, mentre nelle GMM serviranno anche iperparametri.
-- **Unsupervised Learning:** qui viene dato all'algoritmo di learning solo l'input $x^{(i)}\in R$, senza quindi nessuna etichetta. Il loro obiettivo è stimare come i dati si distribuiscono quindi sulla probabilità di riscontrare un certo input. I modelli generativi fanno proprio questo, come il K-means, che divide lo spazio in cluster dove i suoi elementi sono simili rispetto le loro caratteristiche.
-- **Reinforcement Learning:** non verrà trattato in questo corso, vi attua una tecnica di premio e penalità rispetto al raggiungimento di un determinato obiettivo.
+- **Supervised Learning:** vengono dati in pasto all'algoritmo sia l'input che l'output associato, così vengono risolti classificazione e regressione. 
+- **Unsupervised Learning:** qui viene dato all'algoritmo di learning solo l'input senza quindi nessuna etichetta. Il loro obiettivo è stimare come i dati si distribuiscono quindi sulla probabilità di riscontrare un certo input. 
+- **Reinforcement Learning:** non verrà trattato in questo corso, si attua una tecnica di premio e penalità rispetto al raggiungimento di un determinato obiettivo.
 
-**Parametri e Iperparametri:** un modello di machine learning ha delle impostazioni chiamate parametri che possono essere aggiustate per modificare il suo comportamento. Ogni parametro è legato ad un modello, quindi una funzione matematica utilizzata per risolvere un task. Durante la fase di training si impostano proprio questi valori. Invece, ci sono valori che non possono essere aggiustati dalla fase di training e sono chiamati iperparametri, serve ottimizzarli prima della fase di training, spesso per tentativi.
+**Parametri e Iperparametri:** Durante la fase di training si modificano i parametri per alterare il comportamento del modello. Invece, ci sono valori che non possono essere aggiustati dalla fase di training e sono chiamati iperparametri, serve ottimizzarli prima della fase di training, spesso per tentativi.
 
-Definiamo metriche come **l'accuracy** per la classificazione, quindi la percentuale di risposte corrette date in output dall'algoritmo di learning. Supponiamo di avere 5 mail, 3 spam e 3 ham, tali valutazioni sono dette ground-truth (GT). L'algoritmo valuterà tali mail e contiamo quante volte l'algoritmo ci azzecca.  Se si parla di regressione consideriamo la misura di performance quella dell'errore, calcolato considerando la differenza tra $y $ di GT e $\hat y$ determinato dall'algoritmo ovvero il *Mean Squared Error (MSE)*.
-
-Come già accennato l'esperienza sono i dati, in genere ne abbiamo un set chiamato dataset che vengono rappresentati con una design matrix
+In genere abbiamo un dataset che viene rappresentato con una design matrix
 $$
 x^{(1)}= x^{(1)}_1\ ... \ x^{(1)}_d \\
 x^{(2)}= x^{(2)}_1\ ... \ x^{(2)}_d \\
 ... \\
 x^{(m)}= x^{(m)}_1\ ... \ x^{(m)}_d \\
 $$
-Le colonne sono le features, ogni riga è un dato. Tale matrice è la design matrix che definisce il dataset, ovvero $X \in R^{m\cdot d}$. Un'altra matrice è $Y\in A^{m\cdot k}$ dove $A=\{1,...,k\}$ In genere $k=1$, pertanto $Y$ rappresenta le classi di appartenenza di ogni dato.
+
+$$
+\begin{bmatrix}
+x^{(1)}_1 & x^{(1)}_2 & \cdots & x^{(1)}_d \\
+x^{(2)}_1 & x^{(2)}_2 & \cdots & x^{(2)}_d \\
+\vdots & \vdots & \ddots & \vdots \\
+x^{(m)}_1 & x^{(m)}_2 & \cdots & x^{(m)}_d \\
+\end{bmatrix}
+$$
+Le colonne sono le features, ogni riga è un dato e tale matrice è $X \in R^{m\cdot d}$. Un'altra matrice è $Y\in A^{m\cdot k}$ dove $A=\{1,...,k\}$ In genere $k=1$, pertanto $Y$ rappresenta le classi di appartenenza di ogni dato.
 
 Passando alla procedura di learning, spesso detta di training, si ha in input 
 
@@ -55,7 +56,7 @@ Passando alla procedura di learning, spesso detta di training, si ha in input
 - Modello con i relativi parametri
 - Misura delle performance
 
-In output un set di parametri che migliorino le performance sul dataset fornito. Per sapere se l'algoritmo funziona, alla ricezione di nuovi dati l'algoritmo deve saper generalizzare su un nuovo set di dati, detto dataset di test, da dare in pasto all'algoritmo per verificare se l'algoritmo funziona. Qualora avessimo anche gli iperparametri, usiamo anche il dataset di validation. Con i dati di training otteniamo i parametri del modello, con il dataset di validation otteniamo gli iperparametri (indipendenti dal modello) e infine il dataset di test per ottenere l'accuracy.
+Per sapere se l'algoritmo funziona, alla ricezione di nuovi dati l'algoritmo deve saper generalizzare su un nuovo set di dati, detto test set. Qualora avessimo anche gli iperparametri, usiamo anche il dataset di validation. Con i dati di training otteniamo i parametri del modello, con il dataset di validation otteniamo gli iperparametri (indipendenti dal modello) e infine il dataset di test per ottenere l'accuracy.
 
 Un algoritmo di classificazione per classificare $x_1$ potrebbe essere:
 
@@ -82,25 +83,18 @@ $$
 In questo modo i dati avranno media zero e deviazione standard 1. Definiamo infatti:
 
 - **Media:** $\mu_j=\frac1m\sum_{i=1}^mx_j^{(i)}$
-- **Deviazione Standard:** $\mu_j=\sqrt{\frac1m\sum_{i=1}^{m}x_j^{(i)}-\mu_j}$
+- **Deviazione Standard:** $\sigma_j=\sqrt{\frac1m\sum_{i=1}^{m}x_j^{(i)}-\mu_j}$
 
 
 
 **Il paradigma Training/Test**
 
-Una produra di training tenta di ottimizzare le performance dell'algoritmo sui dati disponibili, ma non è garantito che dopo la fase di training performerà bene su dati che non ha mai visto. In pratica quindi usiamo:
-
-- Training Set, per il training
-- Test Set, per valutare le performance dopo il training
-
-Pertanto i processi sono due:
+Una produra di training tenta di ottimizzare le performance dell'algoritmo sui dati disponibili, ma non è garantito che dopo la fase di training performerà bene su dati che non ha mai visto.
 
 - Training: usiamo la procedura di learning per ottimizzare i parametri dell'algoritmo di machine learning
-- Testing: usiamo l'algoritmo allenato per processare i dati di test e valutare le performance dell'algoritmo. Tale fase viene anche chiamata di validazione.
+- Testing: usiamo l'algoritmo allenato per processare i dati di test e valutare le performance dell'algoritmo.
 
-Sostanzialmente preso un dataset lo dividiamo a caso in un Training set (più grande) e un Test Set (più piccolo), perchè vogliamo che siano omogenei.
-
-Come detto gli algoritmi di machine learning hanno anche degli iperparametri che non sono ottimizzati in fase di training. Per sistemarli, possiamo dividere il dataset in 3 insiemi, training, validation e test. Quello di validazione serve a selezionare gli iperparametri migliori tale fase viene chiamata fase di Tuning..
+Come detto gli algoritmi di machine learning hanno anche degli iperparametri che non sono ottimizzati in fase di training. Per sistemarli, possiamo dividere il dataset in 3 insiemi, training, validation e test. Quello di validazione serve a selezionare gli iperparametri migliori tale fase viene chiamata fase di tuning.
 
 ![](.\img\tuning.png)
 
@@ -110,22 +104,16 @@ Ora, mettiamo in ordine tutto. Abbiamo un dataset, lo dividiamo in training data
 
 ### 1.1 Componenti del ML
 
-Possiamo parlare di algoritmi discriminativi e generativi. In questo corso vedremo quelli discriminativi, supponiamo di avere un grafico con diversi punti mediamente divisi in cluster. Quello che vogliamo fare è determinare un modello che funga da confine di decisione, dividendo i dati in classi. I dati saranno $x \in R^d$, e le etichette $y=\{0,1\}$. Da qui vogliamo sapere la probabilità di assegnare un etichetta a un dato, cioè $P(y|x)$ quindi una probabilità a posteriori.
-
-Nel caso di modelli generativi si ragiona in probabilità congiunta, quindi $P(x,y)$ cioè la probabilità di osservare il punto $x$ appartenente alla classe $y$, così da utilizzare la regola di Bayes per trasformare la probabilità congiunta in una probabilità condizionata quindi a posteriori.
+Quello che vogliamo fare è determinare un modello che funga da confine di decisione, dividendo i dati in classi. I dati saranno $x \in R^d$, e le etichette $y=\{0,1\}$. Da qui vogliamo sapere la probabilità di assegnare un etichetta a un dato, cioè $P(y|x)$ quindi una probabilità a posteriori.
 
 Gli ingredienti del machine learning sono:
 
 1. Modello
-2. Loss Function (o misura degli errori) che serve a capire se il modello ha appreso qualcosa durante la fase di training 
+2. Loss Function
 3. Algoritmo di learning
-4. Evaluation, per valutare il modello
+4. Performances evaluation
 
-Dobbiamo capire come possiamo noi umani imparare, e il componente principale del cervello è il neurone, la più semplice macchina compotazionale. Da una parte abbiamo i dentriti che prendono input che viene passato al soma, che possiamo vederla come la process unit del neurone, che lo invia all'assone, il quale ritorna un output della computazione, che la inoltra al terminale dell'assone, dove abbiamo diversi percorsi che si ripartono. 
-
-Da qui il neurone può comunicare con altri neuroni attraverso le sinapsi che stabiliscono una conduzione elettrica. Un neurone che riceve input può essere attivo o non attivo, se tale input è high level allora è attivo, altrimenti se low level non lo attiva e dipende dal neurone. Sostanzialmente prendono un input binario e restituiscono un output binario, low e high, 0 e 1. Combinando vari neuroni, otteniamo la rete neurale (neural network). 
-
-Sostanzialmente a diversi input corrisponde l'attivazione di determinati neuroni, che a loro volta comuncheranno con gli altri. Si pensa che i neuroni stratificano in livelli in maniera gerarchica, i livello più alti sono atti al riconoscimento di elementi più astratti.
+Dobbiamo capire come possiamo noi umani imparare, e il componente principale del cervello è il neurone, la più semplice macchina compotazionale.
 
 ### 1.2  Modello di McColloch-Pitt
 
@@ -150,7 +138,7 @@ La threshold ce la da la funzione oracolo, quindi dobbiamo conoscere l'output vo
 
 ![](.\img\neuro.png)
 
-Possiamo fare anche delle cose più interessanti, come per esempio se abbiamo un neurone con un input inibitorio e un input eccitatorio con threshold 1 allora stiamo computando $x_1+\overline x_2 \ge 1$. Tale modello, come notiamo, è parametrizzato, dove i parametri sono gli input e le threshold. Possiamo creare modelli più complessi usando questo tipo di neurone, magari combinando diversi neuroni creando una network a più livelli.
+Possiamo fare anche delle cose più interessanti, come per esempio se abbiamo un neurone con un input inibitorio e un input eccitatorio con threshold 1 allora stiamo computando $x_1+\overline x_2 \ge 1$. Tale modello, come notiamo, è parametrizzato, dove i parametri sono gli input e le threshold.
 
 Ovviamente questo modello ha dei limiti, infatti:
 
@@ -164,13 +152,13 @@ Ovviamente questo modello ha dei limiti, infatti:
 
 ### 1.3  Modello del percettrone - Rosenblatt
 
-Consiste nella naturale evoluzione del modello del neurone. Il percettrone può essere visto come un'unità di elaborazione dati, che riceve diversi input, non abbiamo input inibitori ma abbiamo un peso associato ad ogni input detto peso. Tale modello è in grado di computare la combinazione lineare degli input, non solo la somma. L'output va in una nuova unità detta step function, dove abbiamo un altro parametro che definirà la threshold dando un output binario
+Consiste nella naturale evoluzione del modello del neurone. Il percettrone può essere visto come un'unità di elaborazione dati, che riceve diversi input, non abbiamo input inibitori ma abbiamo un peso associato ad ogni input detto peso. Tale modello è in grado di computare la combinazione lineare degli input. L'output va in una nuova unità detta step function, dove abbiamo un altro parametro che definirà la threshold dando un output binario
 
 ![](.\img\percep.png)
 
 Tale modello computa:
 $$
-f(x_1, ..., x_d)= \begin{cases} 1\ \ \ \ se\ \sum_{j=1}^dv_jx_J>\theta_0 \\
+f(x_1, ..., x_d)= \begin{cases} 1\ \ \ \ se\ \sum_{j=1}^dw_jx_J>\theta_0 \\
 \\
 0\ \ \ \  \text{altrimenti}
 \end{cases}
@@ -179,21 +167,19 @@ Sostanzialmente gli input appartengono all'insieme dei reali.
 
 Possiamo modificare tale modello spostando la step function all'input si ha che la sommatoria deve essere maggiore di 0 per essere pari a 1. Se avessimo 3 dimensioni il confine di separazione non sarebbe una linea ma un piano. 
 
-Abbiamo detto che stiamo computando $\sum x_j\theta_j>0$, con il possibile output che è una classificazione binaria. Se $y=0$ e $\hat y = 1$ devo decrementare i parametri per permettere di allinearci alla stima giusta. Può succedere il contrario, quindi voglio in output 1 ma la stima è zero. Significa che la sommatoria non supera lo zero e dobbiamo incrementare i pesi delle feature, quindi vogliamo incrementarlo o decrementarlo a seconda dei casi di un certo $\epsilon$.
+Stiamo computando $\sum x_j\theta_j>0$, con il possibile output che è una classificazione binaria. Se $y=0$ e $\hat y = 1$ devo decrementare i parametri per permettere di allinearci alla stima giusta. Può succedere il contrario, quindi voglio in output 1 ma la stima è zero, significa che la sommatoria non supera lo zero e dobbiamo incrementare i pesi delle feature.
 $$
 \theta_j \leftarrow \theta_{j}+(y-\hat y)x_j
 $$
-Questa formula funziona in entrambi i casi sopracitati sfruttando gli errori che abbiamo. Quello che fa è modificare il peso in base all'errore e certe feature (anche tutte).
-
-L'operazione che faremo è $\theta \leftarrow \theta_j  \pm \epsilon$.
+Questa formula funziona in entrambi i casi sopracitati sfruttando gli errori che abbiamo. Quello che fa è modificare il peso in base all'errore. L'operazione che faremo è $\theta \leftarrow \theta_j  \pm \epsilon$.
 
 I passi sono:
 
 1. Inizializza i pesi random in [0,1]
-2. Considera $x^{(1)}$ e computa $\hat y^{(i)}$ e questo $\forall i$
+2. Considera $x^{(i)}$ e computa $\hat y^{(i)}$ e questo $\forall i$
 3. Per le predizioni errate aggiusta i pesi:
-   1. Se $y=0$ e $\hat y = 1$ decrementa
-   2. Se $y=1$ e $\hat y = 0$ incrementa
+   - Se $y=0$ e $\hat y = 1$ decrementa
+   - Se $y=1$ e $\hat y = 0$ incrementa
 4. Ritorna al passo 2 fino a convergenza
 
 
@@ -204,7 +190,7 @@ Questa categoria di problemi non è rappresentabile con modelli lineari a causa 
 
 ![](.\img\xor.png)
 
-Come possiamo risolverlo? Pensiamo di avere una rete neurale a percettroni così fatta:
+Pensiamo di avere una rete neurale a percettroni così fatta:
 
 ![](.\img\rete.png)
 $$
@@ -218,43 +204,24 @@ Tale modello descrive proprio la soluzione al problema dello XOR. Infatti le tab
 
 Dal grafico notiamo che abbiamo collassato i punti in cui deve essere falso nel punto $(0,0)$, e possiamo dividere linearmente!
 
-In effetti non possiamo fare learning in questo caso come abbiamo visto nel capitolo scorso, perchè non possiamo sistemare i pesi per risolvere questo tipo di network che può risolvere problemi più complessi, non sappiamo a priori quali dovrebbero essere i pesi del livello intermedio (spoiler: risolto con la backpropagation).
-
-> Spiegazione tensori ChatGPT
->
-> Un **tensore** è essenzialmente una struttura di dati che può contenere valori organizzati in più dimensioni. Nello specifico possiamo avere matrici tridimensionali. Nel contesto del machine learning, specialmente nelle reti neurali profonde (deep learning), i tensori sono utilizzati per rappresentare informazioni.
+In effetti non possiamo fare learning in questo caso come abbiamo visto nel capitolo scorso, perchè non possiamo sistemare i pesi per risolvere questo tipo di network che può risolvere problemi più complessi, non sappiamo a priori quali dovrebbero essere i pesi del livello intermedio, ma lo risolveremo con la backpropagation.
 
 
 
 ## 2  Regressione
 
-La regressione è una tecnica di leaerning supervisionato che data una funzione parametrizzata $f:R^n\rightarrow R^{n'}$ cerca di approssimare la relazione tra input e output dove $n$ è il numero di feature ed $n'$ è il numero di output.
-
-Per costruire un modello di regressione ci servono:
-
-1. Un modello (la funzione parametrizzata, per esempio se regressione lineare una retta)
-2. Loss Function (Misura degli errori delle predizioni e i dati reali)
-3. Algoritmo di learning (Un metodo per aggiornare i parametri per es. discesa del gradiente)
-4. Valutazione del modello
-
-Ci serviranno dei dati per:
-
--  Training
-- Validation
-- Test (per valutare il modello)
-
-Ricordiamo che siamo in learning supervisionato, quindi nel training abbiamo dei dati associati alla loro etichetta.
+La regressione è una tecnica di learning supervisionato dove data una funzione parametrizzata $f:R^n\rightarrow R^{n'}$ cerca di approssimare la relazione tra input e output.
 
 Immaginiamo di avere:
 $$
 Y_{test} = \{y^{(i)}\}_{i=1}^m \\
 \hat Y = \{f_\theta (x^{(i)}) \}_{i=1}^m
 $$
-Ricordiamo che $m$ è il numero di dati che abbiamo nel dataset. $Y_{test}$ è un insieme di campioni, non di dati! Si intende quindi che l'$i$-esimo campione avrà struttura $Y^{(i)}=y_1^{(i)},...,y_{n'}^{(i)}$. Di conseguenza gli output  $\hat Y^{(i)}=y_1^{(i)},...,y_{n'}^{(i)}$.
+dove $m$ è il numero di dati che abbiamo nel dataset. Si intende quindi che l'$i$-esimo campione avrà struttura $Y^{(i)}=y_1^{(i)},...,y_{n'}^{(i)}$. 
 
-Possiamo valutare la regressione lineare utilizzando il Mean Square Error, cioè una distanza euclidea. Que ovvero:
+Possiamo valutare la regressione lineare utilizzando il Root Mean Square Error, cioè una distanza euclidea.
 $$
-||\hat y^{(i)} - y^{(i)}||_2 = \sqrt{\sum_{j=1}^{n'}(\hat y^{(i)}_j - y^{(i)}_j)^2}
+RMSE = \sqrt{\sum_{j=1}^{n'}(\hat y^{(i)}_j - y^{(i)}_j)^2}
 $$
 E di conseguenza l'errore:
 $$
@@ -262,7 +229,7 @@ Error(Y_{test}, \hat Y_{test}) = \frac1m \sum_{i=1}^m{||\hat y^{(i)} - y^{(i)}||
 $$
 Volendo potremmo anche togliere la radice quadrata, peggiorando diciamo l'importanza gli errori che possono nascere.
 $$
-MSE = ||\hat y^{(i)} - y^{(i)}||_2 = \sum_{j=1}^{n'}(\hat y^{(i)}_j - y^{(i)}_j)^2
+MSE = \sum_{j=1}^{n'}\big (\hat y^{(i)}_j - y^{(i)}_j\big )^2
 $$
 Abbiamo definito la regressione come una funzione parametrizzata $f:R^n \rightarrow R^{n'}$, ma ci sono tre casi specifici:
 
@@ -270,129 +237,125 @@ Abbiamo definito la regressione come una funzione parametrizzata $f:R^n \rightar
 2. $n>1$, $n'=1$ :arrow_right: Multiple Regression quindi $f_\theta(x_n) = y$ con $\theta_0 + x_1\theta_1+...+x_n\theta_n = \vec\theta^T\vec x$.
 3. $n>1$, $n'>1$ :arrow_right: Multivariate Regression avremo sostanzialmente $n$ regressioni lineari ognuna di esse darà un output
 
-Con la Linear Regression possiamo descrivere i dati con una retta.
-
 Definiamo la **Loss Function**, prende in input il vettore dei parametri e deve stimare l'errore sui dati di training
 $$
-J(v) = \frac12 \sum_{i=1}^m (f_v(x^{(i)})-y^{(i)})
+J(v) = \frac12 \sum_{i=1}^m \big (f_v(x^{(i)})-y^{(i)}\big )
 $$
-Tale funzione è differenziabile e questo è importante per renderla riutilizzabile per altri modelli. Di tale funzione vogliamo trovare il minimo, minimizzare la quantità di errore quindi trovare i parametri che ci consentono tale situazione. Una volta trovata, fissiamo i parametri e li utilizziamo nella fase di test.
+Di tale funzione vogliamo trovare il minimo, quindi trovare i parametri che ci consentono tale situazione. 
 
 Ad ogni iterazione cambieremo i parametri, facendo scendere la quantità degli errori. Per farlo, mando un input random e calcolo la derivata, se è negativa significa che mi conviene aggiungere qualcosa, viceversa se positiva significa che mi conviene togliere qualcosa. 
 
-Tale algoritmo si chiama discesa del gradiente. Via via raggiungeremo il punto di zero, che sarà il punto di minimo della funzione. Possiamo impostare anche un parametro detto learning rate che ci permette di velocizzare il learning.
+Tale algoritmo si chiama discesa del gradiente. Via via raggiungeremo il punto di zero, che sarà il punto di minimo della funzione. Possiamo impostare anche un parametro detto learning rate che ci permette di velocizzare il learning.g
 $$
 v^t_j =v_j^{t-1} - \gamma \frac {\partial \delta  } {\partial v_j }
 $$
-Abbiamo parlato di feature scaling, se non le scaliamo la discesa del gradiente potrebbe far fatica per raggiungere il minimo, quindi meglio normalizzare.
+Se i dati hanno scale molto diverse la discesa del gradiente potrebbe far fatica per raggiungere il minimo, quindi meglio normalizzare. La funzione di costo può avere una forma che rende difficile la convergenza. Normalizzare le feature, ad esempio tra 0 e 1, può rendere più facile e veloce raggiungere il minimo. Successivamente selezioniamo una split per training e validation, fissiamola e trainiamo. Dopo di che confrontiamo i modelli (variano gli iperparametri) e così li selezioniamo.
 
-Andando avanti
+### 2.1  REC Curve
+
+La REC Curve è un metodo grafico per valutare i modelli di regressione. Cioè che facciamo è:
+
+1. Per ogni campione del test set calcoliamo l’errore tra la predizione e la ground truth.
+2. Ordiniamo gli errori in ordine crescente
+3. Costruiamo il grafico dove sull’asse x rappresentiamo la tolleranza all’errore $\epsilon_i'$, è un valore arbitrario e dipende da quanto siamo disposti a tollerare un errore, mentre l’asse y mostra la percentuale cumulativa di punti predetti nella tolleranza corrispodente
+4. Tracciamo il grafico come definito al punto 3, avremo una curva monotona crescente che parte da $(0,0)$ e arriva a $(\epsilon_i,1)$ sull’errore massimo.
+
+Una REC curve ideale va rapidamente a 1 perchè gli errori sono piccoli. L’area sotto la curva fornisce una misura della bontà dell’algoritmo. Consiste in un buon metodo per confrontare modelli di regressione che hanno errori medi simili, ma preferiamo vedere come si distribuiscono. Meglio quello con errori più piccoli.
+
+
+
+### 2.2  Equazione Normale
+
+La discesa del gradiente trova i parametri che minimizzano la loss function in maniera iterativa, invece l’equazione normale trova i parametri in un solo stem risolvendo il problema analiticamente
+
+![image-20250428153705569](C:\Users\simon\AppData\Roaming\Typora\typora-user-images\image-20250428153705569.png)
+
+Abbiamo un training set T e un vettore di output Y, l’equazione normale fornisce una formula diretta per il calcolo dei parametri. Sostanzialmente è:
 $$
-J(v) = \frac12 \sum_{i=1}^m (f_v(x^{(i)})-y^{(i)}) = \frac 12 \sum_{i=1}^m 
+\hat \theta = \min_\theta J(\theta) = (T^TT)^{-1}T^Ty
 $$
+Calcolare questa equazione è un’operazione che dipende dai parametri dato che ha una complessità $O(n^3)$ pertanto per n piccoli va bene altrimenti usiamo la discesa del gradiente.
 
 
 
-...
+### 2.3  Capacità del modello, overfitting e underfitting
 
-----
+Più un modello ha parametri, più è complesso e più è capace. Maggior capacità non implica migliori risultati generali perchè potremmo finire per fittare perfettamente i dati di training con curve davvero complesse ma finire per avere risultati scadenti in fase di testing. Questa situazione viene detta **overfitting**, e dato che c’è un grosso salto tra errori su training set e test set si dice che c’è **alta varianza**.
 
-appunti 
+Invece potrebbe succedere l’opposto, se un modello è troppo semplice allora non fitta bene nè i dati di training nè quelli di testing, cioè è una situazione di underfitting, e si dice che c’è un bias alto.
 
-andiamo ad aggiornare il valore di teta a cui andiamo a sottrarre un gamma gerivato j di teta e questo per ogni theta
+![image-20250428162814760](C:\Users\simon\AppData\Roaming\Typora\typora-user-images\image-20250428162814760.png)
 
-questo avviene in maniera simultanea mantenendo i set di parametri al tempo t e aggiornare i parametri del tempo t+1 tenendo conto di quelli passati
+Con underfitting aumentare il dataset ovviamente non aiuta a risolvere il problema, serve aumentare la sua complessità. Invece con l’overfitting potrebbe essere utile aumentare i dati, modelli molto complessi quindi hanno bisogno di molti dati (Vi dice niente riguardo GPT?). Può aiutare anche ridurre la complessità del modello o regolarizzare i dati.
 
-per comparare i modelli possiamo utilizzare una misura dell'errore (MSE, RMSE o MAE), facciamo un random split del dataset e FISSATO QUESTO SPLIT facciamo training e validation sui modelli, non possiamo mica valutare i modelli su diversi data split.
-
-Un altro modo è la Rec Curve,  su tanti dati avremo diverse valutazioni dell'errore, per esempio applicando MSE, lo scopo è avere per tutti gli errori valori piccoli, possiamo fare un sort e contiamo quanti errori abbiamo per un determinato dato massimo (contiamo tutti quelli più piccoli) vogliamo che tale conta arrivi a 1 il prima possibile e vogliamo che la curva cresca velocemente, vogliamo errori piccoli sull'asse delle x e sull'asse f(x) contiamo quanti errori abbiamo per quel valore. se tale curva cresce velocemente significa che abbiamo tanti errori piccoli ed è una situazione desiderabile! Ogni bin su x conta quanti errori ci sono più piccoli fi f(x), se abbiamo M tagli allora all'errore più grande avremo M/M quindi 1 perchè è una percentuale
-
-----
-
-con l'equazione normale dimostriamo che il theta che vogliamo è il minimo, e data la matriece T e gli output Y allora corrisponde a 
-(T^tT)^{-1}Ty, troppa comlessità meglio la discesa del gradiente
-
----
-
-Abbiamo parlato in passato di capacità del modello, in qualche modo è la complessità del modello, più è complesso più riesce a risolvere problemi complessi
-
-per esempio un modello polinomiale è più complesso di un modello lineare, è più capace! Quello lineare è una retta (Underfitting, high bias)
-
-Se un modello è MOLTO complesso, potrebbe essere perfetto sui dati di training e ma avere continue salite e discese.
-
-Una via di mezzo, quindi non troppo complesso, si ottiene una linea più omogenea e che becca bene i dati. Questo funziona sia nel train che nel test. ()
-
-Quello visto nel modello molto complesso invece nel test va davvero male seppur vada bene nel training. Questo è un problema di overfitting con hight variance, cambiando poco poco il training ne segue che il modello cambia totalmente
-
-Quando vogliamo debuggare, se ha troppa capacità quindi se ha troppi parametri potrebbe succedere che ci sia overfitting
-
-la loss function con regolarizzazione cerca di prevenire l'overfitting, il regolarizzatore può avere assegnato un iperparametro lambda (quindi assegnato prima della fase di training, durante la quale vengono alterati i parametri!) . Nel regolarizzatore non considero theta con zero, è l'unico che non voglio toccare perchè mi serve per shiftare il modello verticalmente
-
----
-
-Manca solo l'algoritmo di learning e useremo sempre la discesa del gradiente.
-
----
-
-Capiamo come debuggare, ci servono degli strumenti per cercare di capire come muoverci. Un modo per scegliere il modello è fare cross validation sulla media degli errori e via prendiamo quello con meno errori.
-
-Il problema che introduciamo è quello del model selection, abbiamo un set di dati, possiamo ovvervare la loss function in training (regolarizzata), poi una loss function di validation non regolarizzata perchè coincide sostanzialmente con MSE ovviamente la parte di regolarizzazione serve solo in fase di training. Anche nella fase di test non ci serve il regolarizzatore ovviamente, possiamo usare anche qua MSE. I parametri cambiano solo nella fase di training. # Approfondisci differenza tra fase di validazione e test
-
-Dati diversi modelli faccio una fase di training, cerco il minimo della loss function. Preso il minimo scelgo il modello che da l'errore minimo sul validation!!! Una volta scelto posso valutare la loss function su test
-
-Se jtrain ejval sono entrambi alti siamo in underfitting e high bias
-
-Se jval alto e jtrain basso siamo in overfitting
-
----
-
-Valutiamo lambda, al crescere di lambda considerando Jtrain ad alti lambda abbiamo alti errori, per bassi lambda abbiamo pochi errori
-
-su Jval invece abbiamo una U come prima. Alto Jval e basso Jtrain abbiamo overfitting, su alto Jval e alto Jtrain abbiamo underfitting
-
-se lambda è troppo piccolo è quasi come se stessimo rimuovendo il regolarizzatore
-
-----
-
-A volte si pensa che aumentando la banca dati le performance migliorano, non è sempre così
-
-dato m numero di campioni e una valutazione dell'errore al crescere di m  sicuramente crescono gli errori, finchè questo si stabilizza
-
-guaerdando j val invece con pochi dati ho molti errori, e via via tenderà ad un valore simile a quello di Jtrain con tanti dati
-
-
-
-----
-
-Lezione 1 aprile
-
-**Classificazione**
-
-Abbiamo dei dati disposti su un piano cartesiano, ci poniamo l'obiettivo di identificare due classi. In questo contesto possiamo associare il concetto di positivo e negativo.
+La regolarizzazione consiste nel migliorare la capacità del modello per permettergli di generalizzare su dati mai visti, evidando di adattarsi troppo al training set. La funzione di loss che misura l’errore viene modificata aggiungendo un termine di penalizzazione, progettato per penalizzare valori elevati dei parametri del modello e prediligendo quindi valori più piccoli.
 $$
-\{0,1\}
+J_{reg}(\theta) = J(\theta) + \lambda\sum_{j=1}^d \theta_j^2
 $$
-Dobbiamo identificare il cosiddetto decision boundary, che ci permette di effettuare la classificazione. Tale modello può essere lineare o non lineare.
-
-Abbiamo un modello parametrico, la loss function e l'algoritmo di learning e un metodo per valutare il modello. Nel caso di problemi di classificazione multiclasse possiamo avere quindi più di due classi, è possibile ottenerlo in realtà sfruttando più classificatori binari. Vedremo due tecniche:
-
-- One vs All
-- One vs One
-
-Immaginiamo di avere un'immagine di una mammografia, vogliamo sviluppare un algoritmo in grado di identificare per ogni parte di immagine un classificatore che identifica cellule non tumorali e cellule tumorali. Anche il face recognition è un problema di classificazione binaria.
-
-Potremmo pensare che se $h_\theta(x)$ è maggiore di una certa soglia allora assegna 1, altrimenti 0. Adottando un regressore lineare avremo una linea che prova a minimizzare le distanze tra i vari punti. Il problema è che introducendo degli outlier nella fase di training, potremmo introdurre falsi negativi. Pertanto è bene che la funzione abbia valori tra 0 e 1, così che sia normalizzato.
-
-Ci serve quindi un modello che non sia semplicemente lineare. Inoltre non possiamo usare la loss function lineare, perchè non vogliamo semplicemente calcolare la distanza dalla previsione ma contare quanti errori vengono effettuati.
-
-*disegno simile a percettrone* 	sigmoid
-
-Immaginiamo di avere un 
+dove $\lambda$ è un iperparametro che controlla l’intensità della regolarizzazione. Non si include il parametro $\theta_0$ ovvero il bias o intercetta perchè è quello ce consente di spostare l’intercetta del modello.
 
 
 
 
 
+## 3  Classificazione
+
+La classificazione consiste nel partizionare lo spazio delle features in regioni distinte, ciascuna delle quali rappresenta una classe predefinita. Tali regioni si delineano con confini decisionali. Distinguiamo classificazione binaria e multiclasse. Nella classificazione binaria vogliamo dividere lo spazio in due regioni, non è bene fare regressione lineare perchè non fitta bene i dati. Meglio usare una regressione logistica:
+
+
+
+![image-20250428171243292](C:\Users\simon\AppData\Roaming\Typora\typora-user-images\image-20250428171243292.png)
+
+
+
+L’output del modello si interpreta come la probabilità di assegnare il dato alla classe positiva. Si calcola mediante la funzione digmoide
+
+![image-20250428171359457](C:\Users\simon\AppData\Roaming\Typora\typora-user-images\image-20250428171359457.png)
+
+Tale equazione descrive un iperpiano che separa le due classi. Il confine consiste nella probabilità del 50%. Potremmo decidere confini più complessi come quelli non lineari. La funzione sigma è detta sigmoide, possiamo scriverla usando la tangente iperbolica.
+
+La Cross-Entropy loss è fondamentale per la classificazione binaria, consiste in:
+
+![image-20250428181912760](C:\Users\simon\AppData\Roaming\Typora\typora-user-images\image-20250428181912760.png)
+
+dove $h_\theta(x)$ è la probabilità predetta mentre $y^{(i)}$ la ground truth. Misura quanto le previsioni del modello si discostano dalle etichette reali. In fase di training vogliamo minimizzare tale funzione.
+
+Inoltre è possibile definire delle zone di rigetto, ovvero quelle aree dubbie dove il modello non è in grado di assegnare facilmente una classe all’input, pertanto piuttosto che sbagliare preferisce rifiutare di rispondere.
+
+Quando invece abbiamo classificazione multiclasse vogliamo trovare più di due regioni, possiamo risolvere questo problema con più classificatori binari. Le etichette sono rappresentate mediante one-hot encoding.
+
+- OvA: Si addestra un classificatore binario per ogni classe, ognuno ha l’obiettivo di distinguere una classe dalle altre combinate (considerate tutte negative). Per esempio con tre classi A, B e C avremo un classificatore che distingue elementi di classe A da elementi di classe non A e così via per le altre.
+  <img src="C:\Users\simon\AppData\Roaming\Typora\typora-user-images\image-20250428182824299.png" alt="image-20250428182824299" style="zoom: 50%;" />
+- OvO: si addestra un classificatore binario per ogni coppia di classi, quindi se abbiamo K classi addestreremo $\frac{K(K-1)}{2}$. Alla fine si sceglie quello che ha più vittorie.
+  <img src="C:\Users\simon\AppData\Roaming\Typora\typora-user-images\image-20250428183205091.png" alt="image-20250428183205091" style="zoom:50%;" />
+
+In caso di pareggi andiamo a considerare le distanze. Si possono creare anche zone dove ogni probabilità è sotto il 50% per ogni classe.
+
+
+
+### 3.1 Softmax
+
+La regressione logistica consiste in un framework di learning utile a distinguere due classi. Si utilizza, come già anticipato, la funzione sigmoide .
+$$
+h_\theta(x)=\frac{1}{1+e^{-\theta^Tx}}
+$$
+Il training set ovviamente è etichettato dato che siamo nel supervised learning. Usiamo come loss function la Cross-Entropy Loss:
+$$
+J(\theta)=-\frac1m\Big [ \sum_{i=1}^m y^{(i)}\log\big(h_\theta(x^{(i)})\big)+(1-y^{(i)})\log\big(1-h_\theta(x^{(i)})\big) \Big]
+$$
+E utilizziamo la discesa del gradiente per trovare i parametri, ripetendo per ogni $j$ simultaneamente l’operazione:
+$$
+\theta_j \leftarrow \theta_j-\alpha\frac{\partial J(\theta)}{\partial \theta_j}
+$$
+Usando come learning rate valori come $0.1,0.003, 0.001 …$
+
+Per prevenire l’overfitting ci serviamo della regolarizzazione, e per gestire la classificazione multiclasse ci serviamo dell’approccio OvA.
+
+Il Softmax è un framework di learning per fare proprio la multiclass classification ed è una generalizzazione della regressione logistica. Per un dato input vogliamo stimare la probabilità che l’output associato sia $k$, per ogni $k$ nell’insieme degli output possibili. Cioè:
+$$
+P_{\theta^{(k)}}(y=k|x)\ \ \ \ \ \forall k=0,1,..., k-1
+$$
+Il modello softmax si descrive come:
 
 
 
@@ -400,18 +363,17 @@ Immaginiamo di avere un
 
 
 
+Per una data classe, possiamo riassumerlo con:
 
 
 
+L’obiettivo del learning ovviamente è  trovarere i parametri e usiamo sempre la discesa del gradiente. Solo che softmax ha la caratteristica di essere overparametrizzato, nel senso che ci sono molti setting di parametri che danno la stessa soluzione.
+
+Quindi i componenti del softmax sono:
 
 
 
-
-
-
-
-
-
+Ognuno di essi ha un
 
 
 

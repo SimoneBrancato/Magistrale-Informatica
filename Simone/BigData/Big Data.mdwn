@@ -366,7 +366,7 @@ Il coefficiente di Jaccard misura **quanto i due nodi condividono gli stessi vic
 
 **Es. 3**	Immaginiamo di avere dei documenti, utilizziamo la rappresentazione in spazio vettoriale per la rappresentazione dei documenti. Il peso di ciascun vettore viene rappresentato dal punteggio TF-IDF che misura l'importanza di un termine nel documento in relazione alla sua frequenza in tutti i documenti. Per calcolare i cluster di documenti simili possiamo utilizzare la Cosine Similarity, facendo il prodotto vettoriale tra due documenti.
 
-LSH utilizza un **approccio di hashing** per ridurre il numero di confronti necessari. Abbiamo delle funziomappano i vettori ad alta dimensione in codici di hash a bassa dimensione, o bucket. Ogni funzione di hash è progettata per fare in modo che gli **oggetti simili** abbiano una probabilità maggiore di essere mappati nello stesso bucket. Questo riduce drasticamente il numero di confronti da fare ed esamina solo le coppie che finiscono nello **stesso bucket** per almeno una delle funzioni di hash. Non è una singola funzione, ma una **famiglia di tecniche correlate** che possono essere adattate a diversi tipi di misure di similarità (ad esempio, similarità del coseno, distanza di Hamming, similarità di Jaccard, ecc.). 
+LSH utilizza un **approccio di hashing** per ridurre il numero di confronti necessari. Abbiamo delle funzioni che mappano i vettori ad alta dimensione in codici di hash a bassa dimensione, o bucket. Ogni funzione di hash è progettata per fare in modo che gli **oggetti simili** abbiano una probabilità maggiore di essere mappati nello stesso bucket. Questo riduce drasticamente il numero di confronti da fare ed esamina solo le coppie che finiscono nello **stesso bucket** per almeno una delle funzioni di hash. Non è una singola funzione, ma una **famiglia di tecniche correlate** che possono essere adattate a diversi tipi di misure di similarità (ad esempio, similarità del coseno, distanza di Hamming, similarità di Jaccard, ecc.). 
 
 Un aspetto importante da notare è che LSH offre una ricerca di **vicini più prossimi approssimativa**. Ciò significa che l'algoritmo potrebbe non trovare sempre i vicini più prossimi **esatti**, ma troverà quelli "abbastanza vicini", il che è spesso sufficiente nelle applicazioni pratiche. Per esempio, supponiamo di avere un dataset di documenti di testo rappresentati come vettori in uno spazio ad alta dimensione (ad esempio, vettori TF-IDF). Si desidera trovare documenti simili a una query data.
 
@@ -506,13 +506,9 @@ Trick: permutare le righe in realtà non è così immediato, possiamo usare anch
 La Locality Sensitive Hashing (LSH) si basa sull'idea fondamentale di generare un *sketch* per ogni oggetto soddisfi due proprietà principali:
 
 1. Deve essere molto più corto rispetto al numero totale di caratteristiche ($d$) dell'oggetto originale
-2. La similarità tra due vettori di caratteristiche viene trasformata in una relazione di uguaglianza tra i loro *sketch*. In altre parole, se due oggetti sono simili nello spazio originale, avranno una probabilità elevata di essere rappresentati dallo stesso *sketch* dopo l'hashing
+2. Se due oggetti sono simili nello spazio originale, avranno una probabilità elevata di essere rappresentati dallo stesso *sketch* dopo l'hashing
 
-Si basa sulla randomizzazione, il che significa che non garantisce risultati esatti, ma è corretto con alta probabilità. Questo approccio probabilistico è spesso l'unica soluzione praticabile quando si lavora con dataset di grandi dimensioni, dove un confronto esatto sarebbe troppo costoso in termini di tempo e risorse.
-
-Un altro vantaggio chiave è la capacità di garantire un accesso locale ai dati, rendendolo particolarmente efficiente in ambienti distribuiti o quando i dati vengono letti da disco. Questo aspetto è cruciale per migliorare le prestazioni in sistemi Big Data, dove la latenza dell'accesso ai dati può rappresentare un collo di bottiglia significativo.
-
-Nel caso della *Hamming distance*, consideriamo vettori $p$ e $q$ composti da features binarie. La distanza di Hamming tra questi due vettori, indicata come $D(p, q)$, è definita come il numero di posizioni in cui i due vettori differiscono.
+Non garantisce risultati esatti, ma è corretto con alta probabilità. Questo approccio probabilistico è spesso l'unica soluzione praticabile quando si lavora con dataset di grandi dimensioni.
 
 Per applicare la *Locality Sensitive Hashing*, definiamo una funzione di hash $h$ che seleziona un sottoinsieme $I$ con $r$ coordinate casuali dal vettore originale. L'output della funzione di hash è la proiezione del vettore originale sulle coordinate scelte. Ad esempio, se scegliamo $r = 2$ e il sottoinsieme di indici è $I = \{1,4\}$, allora per un vettore $p = 01011$, la sua versione compressa sarà data solo dai valori nelle posizioni 1 e 4, ovvero $h(p) = 01$. Questo approccio consente di ridurre la dimensionalità del problema poiché quelli con una distanza di Hamming ridotta avranno una maggiore probabilità di condividere lo stesso valore di hash.
 
@@ -522,9 +518,7 @@ Questa probabilità è data da:
 $$
 Pr[\text{picking } x : p[x] = q[x]] = \frac{d - D(p, q)}{d}
 $$
-Dove $d$ è la dimensione totale dei vettori binari, $D(p, q)$ è la distanza di Hamming.
-
-Questa formula indica che la probabilità di selezionare una coordinata in cui $p$ e $q$ coincidono dipende direttamente dalla loro similarità: maggiore è il numero di bit uguali tra i due vettori, maggiore sarà la probabilità che la funzione di hash li assegni allo stesso *bucket*.
+Dove $d$ è la dimensione totale dei vettori binari, $D(p, q)$ è la distanza di Hamming. Maggiore è il numero di bit uguali tra i due vettori, maggiore sarà la probabilità che la funzione di hash li assegni allo stesso *bucket*.
 
 Possiamo quindi definire:
 $$
@@ -894,19 +888,13 @@ Moltiplicare il vettore per la costante cambia il modulo ma non la direzione. Pe
 
 Tecniche come **PCA (Analisi delle Componenti Principali)** sfruttano gli autovalori per ridurre la dimensione dei dati e trovare le direzioni più importanti in uno spazio.
 
-Autocoppia: un autovalore e il corrispondente autovettore. 
-
-Tramite un algoritmo possiamo calcolare tutte le autocoppie in una matrice simmetrica.
-
 Riscriviamo l'equazione $Me=\lambda e$ come $(M-\lambda I)e=0$ dove $I$ è la matrice identità, mentre 0 è il vettore con tutte le entry pari a 0. Per essere vera questa equazione, ponendo $e$ diverso da zero, allora il determinante della matrice $(M-\lambda I)$ deve essere zero.
 
-Tale matrice è simile alla matrice $M$ ma se $M$ ha valore $c$ in un elemento diagonale, allora $(M-\lambda I)$ avrà $c-\lambda$ nella stessa posizione. Il determinante della matrice può essere calcolato con il metodo della pivotal condensation (skip)
+Tale matrice è simile alla matrice $M$ ma se $M$ ha valore $c$ in un elemento diagonale, allora $(M-\lambda I)$ avrà $c-\lambda$ nella stessa posizione.
 
 
 
----
-
-
+## Lezione 8 - PCA, SVD e CUR
 
 **Principal Component Analysis**
 
@@ -1012,7 +1000,7 @@ $$
 $$
 è possibile dimostrare che data una matrice $A$ scomposta con SVD, allora la nuova matrice $B$ ottenuta riducendo le dimensioni a $k=\text{rank}(B)$ è la miglior rappresentazione possibile della matrice $A$. Significa che minimizza la formula $(*)$. Questo perchè stiamo introducendo meno errore possibile con le dimensioni scelte.
 
-Ci chiediamo, come decidiamo quante dimensioni tenere? Diciamo che è bene tenere quelle dimensioni che ci consentono di mantenere il 90% delle informazioni di partenza. Quindi la somma dei quadrati dei valori singolari dovrebbe essere almeno il 90% della somma dei quadrati di tutti i valori singolari
+Diciamo che è bene tenere quelle dimensioni che ci consentono di mantenere il 90% delle informazioni di partenza. Quindi la somma dei quadrati dei valori singolari dovrebbe essere almeno il 90% della somma dei quadrati di tutti i valori singolari
 
 Rapporto tra la SVD e decomposizione mediante autovalori ...
 
@@ -1047,19 +1035,23 @@ La scelta del rango è importante perchè così garantiamo una compressione dei 
 
 
 
-## Lezione 8 - Sistemi di raccomandazione
+## Lezione 9 - Sistemi di raccomandazione
 
 Un sistema di raccomandazione è una classe di applicazioni che predicono le risposte degli utenti sulla base delle loro preferenze. Si distinguono due gruppi di tecnologie principali:
 
 - **Content-based systems:** esamina le proprietà degli elementi per raccomandarne di nuovi
 - **Collaborative filtering systems:** usa misure di similarità tra utenti/prodotti per raccomandare nuovi prodotti (quindi oggetti simili o proprietà di utenti simili)
 
-Abbiamo quindi un insieme di oggetti ed utenti rappresentate dentro una utility matrix $U(n,m)$ dove nelle righe abbiamo gli utenti e nelle colonne gli oggetti, che è una matrice sparsa dove per ogni coppia utente-oggetto calcola il grado di preferenza dell'utente. Vogliamo predire le entry vuote della matrice per inferire le preferenze dell'utente.
+Abbiamo quindi un insieme di oggetti ed utenti rappresentate dentro una utility matrix dove nelle righe abbiamo gli utenti e nelle colonne gli oggetti, che è una matrice sparsa dove per ogni coppia utente-oggetto calcola il grado di preferenza dell'utente. Vogliamo predire le entry vuote della matrice per inferire le preferenze dell'utente.
 
 I sistemi di raccomandazione sono molto utili per gli utenti visto che online la quantità di prodotti è pressochè illimitata, quindi consistono in un modo per aiutarli. Costruire tale matrice comunque non è semplice, possiamo adottare due approcci:
 
 - Esplicito: chiedere di valutare un item
 - Implicito: apprendere dalle azioni dell'utente
+
+
+
+## Lezione 10 - Continuo sistemi di raccomandazione
 
 Vediamo adesso qualoi algoritmi possiamo adottare:
 
@@ -1101,23 +1093,63 @@ Sono metodi simili al collaborative filtering ma usano un grafo bipartito, che i
 
 L'idea è che agli oggetti viene assegnata una certa quantità di risorse, e queste vengono trasferite dagli oggetti agli utenti, se questi lo hanno classificato come apprezzato e successivamente vengono trasferiti nuovamente agli utenti, ottenendo dopo una normalizzazione degli score per coppie utenti-oggetti. Funziona su tutti gli oggetti e risolve il problema della sparsità, ma restano i problemi di utenti nuovi e oggetti nuovi, e richiede molta potenza computazionale.
 
-Una volta fatte le predizioni possiamo valutarle confrontandole con dei ratings noti. Possiamo usare la Root-mean-square error, oppure fare dei ragionamamenti sui falsi positivi e falsi negativi. Definiamo:
+![image-20250416122653804](C:\Users\simon\AppData\Roaming\Typora\typora-user-images\image-20250416122653804.png)
+
+Una volta fatte le predizioni possiamo valutarle confrontandole con dei ratings noti. Possiamo usare la RMSE, oppure fare dei ragionamenti sui falsi positivi e falsi negativi. Definiamo:
 $$
-\text{Precision}=\frac{tp}{tp + fp} \\ \text{Recall}=\frac{tp}{tp + fn}
+\text{Precision}=\frac{tp}{tp + fp} \\ \text{Recall}=\frac{tp}{tp + fn}
 $$
 E possiamo costruire la matrice di confusione.
 
 
 
+## Lezione 11 - Continuo sistemi di raccomandazione
+
+skip varie lezioni confuse
 
 
 
+## Lezione 12 - Analisi delle network
+
+Tutti i sistemi complessi sono in qualche modo rappresentabili tramite una network, e va studiata per conoscerli meglio. Sono svariate le tipologie di network. Possiamo riassumerle come un insieme di nodi e archi, che formano un grafo, ovvero una rappresentazione matematica di una network, tipicamente collegata a sistemi reali.
+
+Ovviamente ricordiamo concetti come grafi direzionati e non direzionati, può succedere che le rappresentazioni delle network non siano univoche.
+
+Il grado di un nodo è un valore che corrisponde al numero di archi adiacenti. Nelle network dirette definiamo grado in uscita e in entrata. La maggior parte delle reti sono sparse quindi i nodi sono molto più degli archi. Ogni arco può avere valori associati, come pesi, tipologie o booleani. Se non pesato possiamo rappresentarli come matrici di adiacenza con peso 1 se l’arco c’è , 0 altrimenti. Se pesato al posto di 1 inseriamo il peso. 
+
+Un multigrafo è un grafo dove dati due nodi ci sono più archi che vanno da uno nodo all’altro. Esistono grafi bipartiti se divisi in due file, multilayer se divisi su due piani e multiplex se divisi in n piani.
+
+Un grafo connesso è composto da nodi tutti mutualmente raggiungibili tra loro. Se è disconnesso, ha più di una componente connessa. Dicesi arco ponte un arco che rende il grafo disconnesso. Idem per i nodi detti punti di articolazione.
+
+Il diametro di un grafo è la massima distanza in shortest path tra una coppia qualsiasi di nodi del grafo.
+
+Il coefficiente di clustering è compreso tra 0 e 1 ovvero:
+$$
+C_i = \frac{2e_i}{k_i(k_i-1)}
+$$
+dove $e_i$ è il numero di archi tra i vicini del nodo i. Cioè se un nodo i si lega a 3 nodi non legati tra loro allora il coefficiente è 0. Se due di quesi sono legati allora coefficiente 1/3, e così via con 2/3 e 1.
+
+Analizzando il caso di MSN, notiamo che il degree medio è 14.4, la lunghezza dei path media è 6.6 e il coefficiente di clustering medio è 0.11, come le valutiamo queste proprietà? ci sorprendono? per farlo dobbiamo definire un modello nullo.
+
+Adottando il modello del grafo random, definiamo appunto un grafo con n nodi e ogni arco appare con una certa probabilità.
+
+![image-20250416165012414](C:\Users\simon\AppData\Roaming\Typora\typora-user-images\image-20250416165012414.png)
+
+Sono risultati diversi dalla rete reale.
+
+Le network sono sorprendenti perchè già con 6 gradi di libertà possiamo passare da una qualunque persona all’altra nel mondo.
 
 
 
+## Lezione 13 - Analisi di grandi grafi
 
 
 
+## Lezione 14 - Comunità nelle reti
+
+
+
+## Lezione 15 - Apprendimento sui grafi
 
 
 
