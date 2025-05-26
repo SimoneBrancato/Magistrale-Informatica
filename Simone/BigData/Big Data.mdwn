@@ -123,9 +123,7 @@ Dopo che un **Map Task** ha completato la sua esecuzione, deve generare dei file
 
 Periodicamente il Master invia ping periodici ai Worker per verificare che siano attivi, se uno di essi non risponde allora è crashato e il Master può riassegnare i task ad altri Worker attivi. 
 
-Si sceglie il numero di Map task M molto maggiore del numero di nodi del cluster così che ogni nodo possa eseguire più Map Task in parallelo. Il numero di Map Task viene determinato dal numero di chunk Distribuited File System (DFS) quindi per esempio se ci sono per un file 100 chunks allora 100 Map Tasks. 
-
-In genere il numero di Reduce Task R è più piccolo di M perchè l'output del Reduce verrà scritto su R file e se ce ne sono troppi è troppo frammentato, inoltre i Reduce Task raccolgono più dati per produrre un risultato più aggregato quindi non c'è bisogno di grande parallelismo.
+Si sceglie il numero di Map task M molto maggiore del numero di nodi del cluster così che ogni nodo possa eseguire più Map Task in parallelo. Il numero di Map Task viene determinato dal numero di chunk Distribuited File System (DFS) quindi per esempio se ci sono per un file 100 chunks allora 100 Map Tasks.  In genere il numero di Reduce Task R è più piccolo di M perchè l'output del Reduce verrà scritto su R file e se ce ne sono troppi è troppo frammentato, inoltre i Reduce Task raccolgono più dati per produrre un risultato più aggregato quindi non c'è bisogno di grande parallelismo.
 
 Potrebbe succedere di avere worker lenti e questo è un problema detto **straggler problem**, e dato che il job MapReduce si può dire terminato solo se tutti i worker hanno finito, se anche un solo worker rallenta allora l'intero processo rallenta. La soluzione è la speculative execution, dove verso la fine dell'elaborazione vengono identificati i task che stanno impiegando troppo tempo e questi sono gli stragglers, per velocizzare viene creata una copia dello stesso task su un altro nodo, chi finisce prima vince e possiamo così migliorare i tempi di esecuzione in caso di nodi problematici.
 
@@ -150,7 +148,7 @@ Partition = hash(hostname(URL)) \mod R
 $$
 garantendo che URL di un host finiscano nella stessa partizione.
 
-**Es. 1** 	Supponiamo di avere un grande corpus web, guardando i metadati vediamo che le linee hanno il formato (URL, dimensioni, data, ...). Vogliamo trovare la somma delle dimensioni delle pagine web di ogni host in byte.
+**Es.**	Supponiamo di avere un grande corpus web, guardando i metadati vediamo che le linee hanno il formato (URL, dimensioni, data, ...). Vogliamo trovare la somma delle dimensioni delle pagine web di ogni host in byte.
 
 ```python
 map(key, value):
@@ -165,59 +163,11 @@ reduce(key, values):
     emit(key,result)
 ```
 
-La funzione reduce prende in input il risultato della fase di shuffle group by key, quindi key sarà l'host e values sarà la lista dei valori calcolata, su cui andremo ad iterare.
-
-Chiarimento su iterator da ChatGPT:
-
-> Quando si dice che values è un **iteratore** sui valori associati a una chiave, significa che il framework MapReduce (es. Hadoop o Spark) non fornisce direttamente una **lista** con tutti i valori raccolti, ma piuttosto un **oggetto che permette di scorrere i valori uno alla volta**.
->
-> In pratica non riceviamo una lista completa in memoria, ma un iteratore che ci permette di leggere questi valori in sequenza evitando di dover caricare tutta la lista in memoria, il che è fondamentale quando si lavora con **grandi volumi di dati**.
-
-
-
-**Es. 2**	Dato un grafo diretto descritto con lista di adiacenza costruiamo il grafo con gli archi invertiti.
-
-```pseudocode
-map(key, value):
-	# key: filename; value: lista di adiacenza
-	for r in value:
-		for v in adj(r)
-			emit(v,r)
-			
-reduce() -> Identity function
-```
-
-
-
-**Es. 3** *(No soluz.)*	Immaginiamo di avere un grande corpus web, ogni documento ha un ID. Per ogni parola restituire l'elenco di ID dove la parola appare.
-
-
-
-
-
-**Es. 4** *(No soluz.)*	Filtriamo le linee di un insieme di documenti in cui appare una parola X.
-
-
-
-
-
-**Es. 5** *(No soluz.)*	Dato un elenco di chunk di un documento ordinali secondo un certo criterio.
-
-
-
-
-
-**Es. Matrix-Vector Multiply** 	*pass*
-
-
-
 
 
 ## Lezione 3 - Spark
 
-MapReduce ha rivoluzionato l'elaborazione distribuita, ma scrivere codice direttamente con MapReduce è complesso, soprattutto per problemi che non si adattano facilmente al paradigma di mappatura e riduzione visto che molte applicazioni reali richiedono più passaggi. Inoltre MapReduce basa la sua esecuzione sulla lettura e scrittura su disco tra le fasi di mappatura e riduzione, il che introduce latenze notevoli rispetto all'elaborazione in memoria centrale. 
-
-Questo approccio è inefficiente per applicazioni che necessitano di analisi iterative o interattive, come quelle tipiche del machine learning e dell'analisi grafica. Spark è nato proprio per superare queste limitazioni, introducendo un modello di elaborazione in memoria molto più veloce e un'API più intuitiva rispetto a quella di MapReduce, che si basa su un modello di elaborazione a due fasi. I dati passano sequenzialmente dalla prima fase alla seconda, rendendo il modello rigido e limitato nella sua flessibilità. 
+Scrivere codice direttamente con MapReduce è complesso, soprattutto per problemi che non si adattano facilmente al paradigma di mappatura e riduzione visto che molte applicazioni reali richiedono più passaggi. Inoltre MapReduce basa la sua esecuzione sulla lettura e scrittura su disco tra le fasi di mappatura e riduzione, il che introduce latenze notevoli rispetto all'elaborazione in memoria centrale. 
 
 I sistemi basati su Data-Flow rappresentano un'evoluzione di questo approccio, generalizzando MapReduce:
 
@@ -229,35 +179,20 @@ Spark è un sistema di calcolo distribuito che a differenza di MapReduce non si 
 
 Utilizza un modello basato su **grafi aciclici diretti (DAG)** per definire le dipendenze tra le operazioni, rendendo possibile l'ottimizzazione automatica dell'esecuzione. Inoltre è compatibile con Hadoop, che permette di integrarlo facilmente con ecosistemi esistenti basati su HDFS e YARN, sfruttando le infrastrutture già in uso senza necessità di migrazioni complesse.
 
-Consiste in un framework **open source**, si integra bene con linguaggi come **Java, Scala, Python e R**, rendendolo accessibile a un'ampia comunità di sviluppatori e data scientist. Il concetto chiave su cui si basa Spark è il **Resilient Distributed Dataset (RDD)**, una struttura dati immutabile e distribuita che consente l'elaborazione parallela in modo fault-tolerant. Gli RDD hanno rappresentato la base dell’architettura di Spark sin dalle prime versioni, ma con le evoluzioni del framework come **DataFrame e Dataset**, che forniscono un'interfaccia più ottimizzata e dichiarativa rispetto agli RDD. I **DataFrame** sono tabelle distribuite simili a quelle di un database SQL o di Pandas in Python, mentre i **Dataset** hanno i vantaggi degli RDD. Spark inoltre dispone di un forte supporto a **SQL**, questo permette di eseguire query sui dati in modo familiare, utilizzando operazioni simili a quelle di un database relazionale.
-
 Un **cluster** è una configurazione che consente di risolvere problemi computazionalmente impossibili per una singola macchina, suddividendo il carico di lavoro tra più computer detti **nodi**. Tuttavia, avere semplicemente più macchine non è sufficiente, infatti per gestire l'allocazione dei compiti e coordinare il lavoro tra i nodi è necessario un **framework** che ottimizza l'esecuzione delle operazioni distribuite. Spark gestisce anche questo assegnando i compiti ai nodi in modo bilanciato sfruttando al massimo la capacità del cluster.
 
 Sono tre i punti chiave di Spark, il primo è la **gestione del cluster** responsabile di tracciare e gestire le risorse, potrebbe essere per esempio **YARN**, **Mesos** o il gestore autonomo di Spark. Poi c'è l'**applicazione Spark**, che rappresenta il programma che Spark eseguirà, e si divide in **Driver Process**, che  assegna i compiti, e gli **Esecutori**, che sono i nodi del cluster che eseguono i calcoli veri e propri. Ogni esecutore è responsabile di una parte del lavoro e segnala periodicamente il progresso al driver. Infine, Spark offre diverse **modalità di esecuzione**. In **modalità cluster**, le attività vengono distribuite su più macchine, permettendo l'elaborazione parallela di grandi volumi di dati. Invece la **modalità locale** consente di eseguire Spark su una singola macchina, ideale per test, prototipi oppure operazioni piccole.
 
 <img src=".\img\driverworker.png" style="zoom:67%;" />
 
-Spark è principalmente scritto in **Scala**, che offre una sintassi concisa e potente, particolarmente adatta per gestire l'elaborazione distribuita, perfetta per sfruttare al meglio le caratteristiche del framework. Offre supporto anche per **Java**, anche se le performance non sono sempre ottimali come nel caso di Scala. Un altro linguaggio ampiamente utilizzato con Spark è **Python** che offre un supporto completo per tutti i costrutti di Scala, particolarmente popolare tra i data scientist grazie alla sua sintassi semplice e all'ampio ecosistema di librerie di analisi dei dati. Supporta anche **SQL** e questo permette agli utenti di eseguire query direttamente sui dati distribuiti, integrando così la potenza di Spark con la familiarità del linguaggio SQL. Supporta anche **R**.
-
 Il costrutto chiave di Spark è il **Resilient Distributed Dataset (RDD)**, una collezione partizionata di record che possono essere distribuiti su più nodi di un cluster. Forniscono una struttura dati distribuita e immutabile su cui eseguire operazioni di trasformazione e azione. Gli RDD possono generalizzare le **coppie key-value**, vengono comunemente utilizzati per aggregazioni e operazioni su dataset complessi. Gli RDD una volta creati non possono essere modificati per migliorare l'efficienza, tuttavia è possibile eseguire su di essi operazioni di trasformazione che restituiscono nuovi RDD.
 
-Gli **RDD** di Spark offrono diverse tecniche di **partizionamento** per distribuire i dati su più nodi del cluster, ottimizzando così le operazioni di calcolo parallelo. Le tecniche di partizionamento più comuni sono:
-
-1. **HashPartitioner**: le chiavi vengono partizionate in base al loro **hashcode**
-2. **RangePartitioner**: ordina i dati sulla base della chiave e suddivide i record nelle partizioni specificate in base a intervalli predefiniti
-3. **CustomPartitioner**: consente agli sviluppatori di definire un **partizionamento personalizzato**, che può essere utile per casi d'uso specifici. In questo caso, l'utente ha il controllo completo sulla logica di partizionamento.
-
-Gli **RDD** possono essere creati in due modi: **direttamente da Spark** o tramite **trasformazioni** su altri RDD, permettendo anche di impilare più RDD. Inoltre sono particolarmente adatti per le **applicazioni che applicano la stessa operazione a tutti gli elementi di un set di dati**. Esempi comuni includono operazioni come `map`, `filter` e `flatMap`, dove ogni elemento del dataset viene trattato in modo indipendente dalle altre operazioni, sfruttando appieno il parallelismo.
+Gli **RDD** di Spark offrono diverse tecniche di **partizionamento** per distribuire i dati su più nodi del cluster, ottimizzando così le operazioni di calcolo parallelo. Gli **RDD** possono essere creati in due modi: **direttamente da Spark** o tramite **trasformazioni** su altri RDD. Inoltre sono particolarmente adatti per le **applicazioni che applicano la stessa operazione a tutti gli elementi di un set di dati**. Esempi comuni includono operazioni come `map`, `filter` e `flatMap`, dove ogni elemento del dataset viene trattato in modo indipendente dalle altre operazioni, sfruttando appieno il parallelismo.
 
 La **persistenza** e il **caching** sono tecniche utilizzate per memorizzare i dati intermedi in modo da poterli riutilizzare in fasi successive senza doverli ricalcolare.
 
 - **cache()**: memorizza i dati intermedi in **memoria**, è un'opzione veloce ma limitata, quindi è importante valutare attentamente la quantità di dati da memorizzare.
-- **persistent()**: offre un controllo più dettagliato rispetto a `cache()`, consentendo di specificare dove memorizzare i dati intermedi. Permette di scegliere tra diverse opzioni di storage, come:
-  - **MEMORY_ONLY**: Salva i dati solo in memoria.
-  - **MEMORY_AND_DISK**: Memorizza i dati in memoria, ma se la memoria non è sufficiente, li salva anche su disco.
-  - **DISK_ONLY**: Memorizza i dati esclusivamente su disco.
-  - **MEMORY_ONLY_SER**: Simile a `MEMORY_ONLY`, ma i dati sono memorizzati in formato serializzato, riducendo l'uso della memoria. (Solo Java e Scala)
-  - **MEMORY_AND_DISK_SER**: Combinazione di `MEMORY_AND_DISK` con dati serializzati. (Solo Java e Scala)
+- **persistent()**: offre un controllo più dettagliato rispetto a `cache()`, consentendo di specificare dove memorizzare i dati intermedi.
 
 Le operazioni sugli RDD sono suddivise in:
 
@@ -279,32 +214,23 @@ Le operazioni sugli RDD sono suddivise in:
    - **reduce**: Combina gli elementi di un RDD utilizzando una funzione di riduzione 
    - **save**: Salva i dati in un formato specificato
 
-In Spark, è possibile utilizzare variabili condivise per facilitare la gestione dei dati distribuiti tra i nodi del cluster. Possono essere:
-
-- **Broadcast**: Consentono di distribuire una variabile in sola lettura a tutti i nodi del cluster, memorizzandola in cache su ciascuna macchina.
-- **Accumulators**: Variabili utilizzate per tenere traccia di un valore che può essere aggiornato da più nodi, come un contatore condiviso.
-
 Il **Task Scheduler** di Spark supporta DAG, cioè una rappresentazione di come le operazioni vengono eseguite. Ogni nodo nel DAG rappresenta un'operazione di calcolo, mentre le dipendenze tra queste operazioni sono rappresentate dagli archi. Se ci sono operazioni che possono essere eseguite senza dipendere da altre, Spark cerca di eseguire queste operazioni in parallelo, sfruttando il modello di calcolo distribuito tramite pipeline, che ottimizzano l'esecuzione dei task riducendo al minimo le operazioni di shuffle e migliorando il throughput complessivo.
 
 Il task scheduler è **cache-aware**, quindi cerca di riutilizzare i dati memorizzati in cache per evitare di ricalcolarli ogni volta che sono necessari, ed è consapevole della **località dei dati** cercando di eseguire le operazioni il più vicino possibile ai dati stessi riducendo il traffico di rete. Spark è anche **partitioning-aware**, quindi tiene conto della struttura delle partizioni dei dati quando assegna i task. Questo approccio aiuta a evitare **shuffle** migliorando le prestazioni dell'esecuzione.
 
 [Esercitazione1 Spark](https://colab.research.google.com/drive/1g7Ym065GErGVcC-Zl0dPWLz3WbWu44DG?usp=sharing)
 
-*Funzioni varie: map, flatmap, mapValues, flatMapValues, filter, groupByKey, reduceByKey, join, subtract, sortByKey*
-
 Un **DataFrame** in Spark è una collezione distribuita di dati organizzati in colonne con nome, simile a una tabella di un database relazionale. A differenza degli RDD, che non impongono una struttura sui dati, un DataFrame fornisce una rappresentazione più organizzata dei dati, consentendo operazioni come selezioni, filtri e aggregazioni su colonne specifiche.
 
-Consentono una **maggiore astrazione** rispetto agli RDD, semplificando l'analisi e manipolazione dei dati. Ad esempio, un DataFrame potrebbe contenere dati provenienti da una sorgente strutturata come JSON, CSV, o database esterni. Spark SQL, attraverso il **Catalyst optimizer**, ottimizza le operazioni sui DataFrame, riducendo significativamente i tempi di esecuzione delle query. Grazie a queste ottimizzazioni, operazioni come **join** o **groupBy** sui DataFrame sono molto più veloci rispetto a quando vengono eseguite sugli RDD.
-
-1. **Esecuzione Ottimizzata**: Grazie al Catalyst optimizer, Spark è in grado di applicare ottimizzazioni automatiche per migliorare le prestazioni delle operazioni, riducendo il tempo di esecuzione rispetto agli RDD.
-2. **Interfacce più ricche**: Offrono una **API di più alto livello** rispetto agli RDD, che consente operazioni come SQL-like query, aggregazioni e manipolazioni di dati con sintassi simile a quella SQL.
-3. **Compatibilità con varie sorgenti di dati**: I DataFrame possono essere facilmente creati da una varietà di formati di dati, inclusi Parquet, JSON, CSV e altre sorgenti esterne come i database.
+Consentono una **maggiore astrazione** rispetto agli RDD, semplificando l'analisi e manipolazione dei dati. Ad esempio, un DataFrame potrebbe contenere dati provenienti da una sorgente strutturata come JSON, CSV, o database esterni.
 
 Il **Dataset** in Spark è un'estensione dell'API DataFrame che fornisce una **programmazione orientata agli oggetti** e **type-safe**, ovvero consente di eseguire operazioni sui dati con una maggiore garanzia di sicurezza a livello di tipo, permettendo la rilevazione degli errori al momento della compilazione anziché a runtime. Combinano i punti di forza sia degli RDD che dei DataFrame infatti come gli RDD sono immutabili, ereditano la tipizzazione forte e le operazioni lambda, ma dispongono delle operazioni SQL-like come i Dataframe. Entrambi i tipi di dati (Dataset e DataFrame) sono basati sul motore **Spark SQL**, che ottimizza automaticamente le operazioni di query. I Dataset sono attualmente disponibili per **Java** e **Scala**, ma non per **Python**.
 
 *Librerie utili: SparkSQL, Spark Streaming, Mlib, GraphX*
 
-Confrontiamo adesso Spark, Hadoop MapReduce. Spark è generalmente **più veloce** rispetto a Hadoop MapReduce. La principale ragione è che Spark può elaborare i dati in **memoria**, evitando il costo di scrittura e lettura dai dischi durante il processo di map-reduce. Tuttavia, Spark ha bisogno di una **grande quantità di memoria** per funzionare efficientemente. Se non dispone di risorse di memoria sufficienti o se ci sono altri servizi che competono per le risorse, le prestazioni di Spark possono **degradare** significativamente. In questi casi, potrebbe diventare meno performante di MapReduce, che non dipende tanto dalla memoria, ma piuttosto dall'I/O su disco. MapReduce è più adatto a lavori che richiedono **operazioni a passaggio singolo**, per cui è stato originariamente progettato. Quando le operazioni richiedono più passaggi o necessitano di elaborazioni in tempo reale, Spark risulta più vantaggioso. Spark è generalmente **più facile da programmare** rispetto a Hadoop MapReduce. Spark è molto più **generale** nelle sue capacità di elaborazione rispetto a Hadoop MapReduce, che è stato progettato principalmente per operazioni batch di **analisi dei dati**. 
+Spark è generalmente **più veloce** rispetto a Hadoop MapReduce. La principale ragione è che Spark può elaborare i dati in **memoria**, evitando il costo di scrittura e lettura dai dischi durante il processo di map-reduce. Tuttavia, Spark ha bisogno di una **grande quantità di memoria** per funzionare efficientemente. Se non dispone di risorse di memoria sufficienti o se ci sono altri servizi che competono per le risorse, le prestazioni di Spark possono **degradare** significativamente. In questi casi, potrebbe diventare meno performante di MapReduce, che non dipende tanto dalla memoria, ma piuttosto dall'I/O su disco. 
+
+MapReduce è più adatto a lavori che richiedono **operazioni a passaggio singolo**, per cui è stato originariamente progettato. Quando le operazioni richiedono più passaggi o necessitano di elaborazioni in tempo reale, Spark risulta più vantaggioso. Spark è generalmente **più facile da programmare** rispetto a Hadoop MapReduce. Spark è molto più **generale** nelle sue capacità di elaborazione rispetto a Hadoop MapReduce, che è stato progettato principalmente per operazioni batch di **analisi dei dati**. 
 
 
 
@@ -323,38 +249,32 @@ Lo **Shingling** è una tecnica che trasforma i documenti in insiemi di sottostr
 Esempio: Per la frase *"hello world"*, con **shingles di lunghezza 3**, otteniamo: 
 	"hel", "ell", "llo", "lo ", "o w", " wo", "wor", "orl", "rld"
 
-Il **MinHashing** è una tecnica di compressione degli insiemi di shingles che permette di ridurre la loro dimensione senza perdere troppa informazione sulla similarità. Converte un insieme in una firma più compatta (minhash signature), utilizzando funzioni di hashing che garantiscono una distribuzione uniforme. La probabilità che due insiemi abbiano la stessa firma MinHash è approssimativamente uguale alla loro **similarità di Jaccard**. Questo permette di confrontare documenti in modo più efficiente rispetto a un confronto diretto degli shingles.
+Il **MinHashing** è una tecnica di compressione degli insiemi di shingles che permette di ridurre la loro dimensione senza perdere troppa informazione sulla similarità. Converte un insieme in una firma più compatta (minhash signature), utilizzando funzioni di hashing che garantiscono una distribuzione uniforme. La probabilità che due insiemi abbiano la stessa firma MinHash è approssimativamente uguale alla loro **similarità di Jaccard**.
 
-Il **Locality-Sensitive Hashing (LSH)** è una tecnica che utilizza funzioni di hashing speciali per raggruppare elementi simili in bucket comuni, aumentando la probabilità che due elementi simili vengano confrontati direttamente. LSH riduce drasticamente il numero di confronti richiesti. È particolarmente utile in scenari con grandi dataset, come la rilevazione di spam, il plagiarism detection e la ricerca di immagini simili.
+Il **Locality-Sensitive Hashing (LSH)** è una tecnica che utilizza funzioni di hashing per raggruppare elementi simili in bucket comuni, aumentando la probabilità che due elementi simili vengano confrontati direttamente. LSH riduce drasticamente il numero di confronti richiesti. È particolarmente utile in scenari con grandi dataset, come la rilevazione di spam, il plagiarism detection e la ricerca di immagini simili.
 
-Molti problemi nel mondo reale possono essere riformulati come la **ricerca di insiemi simili**. Le pagine web possono essere confrontate in base alle parole che contengono, permettendo di identificare articoli simili o di rilevare copie di uno stesso documento. Un altro scenario riguarda il comportamento degli utenti nell’e-commerce, infatti se due clienti hanno acquistato prodotti simili è possibile ipotizzare che abbiano preferenze affini e quindi suggerire loro articoli potenzialmente interessanti. La stessa logica si applica alle immagini, dove il confronto avviene attraverso caratteristiche visive piuttosto che tramite testo. Questo approccio è alla base di strumenti di ricerca per immagini simili o per il riconoscimento automatico di oggetti e volti.
+Gli oggetti analizzati possono essere di varia natura: utenti in una piattaforma digitale, pagine web, tweet, prodotti acquistati. Ciò che accomuna questi elementi è il fatto di essere descritti da un insieme di **feature misurabili**, che possono essere di tipo binario, categoriale o numerico.
 
-Possiamo quindi generalizzare definendo tale problema come individuare gruppi di oggetti simili all’interno di un dataset di grandi dimensioni. Ogni oggetto è descritto da un insieme di caratteristiche (features), e l’obiettivo è identificare somiglianze tra di essi in modo efficiente.
+Per confrontare due oggetti, viene utilizzata una funzione di **similarità** che, prendendo in ingresso i loro insiemi di features, restituisce un valore compreso tra 0 e 1. Un valore vicino a 1 indica una forte somiglianza, mentre un valore vicino a 0 suggerisce una scarsa relazione tra i due oggetti. La scelta della funzione dipende dal tipo di dati trattati: per dati testuali si utilizza spesso la similarità di Jaccard, mentre per dati numerici metriche come la distanza Euclidea o la cosine similarity.
 
-Gli oggetti analizzati possono essere di varia natura: utenti in una piattaforma digitale, pagine web, tweet, prodotti acquistati. Ciò che accomuna questi elementi è il fatto di essere descritti da un insieme di **feature misurabili**, che possono essere di tipo binario (es. "ha comprato un prodotto: sì/no"), categoriale (es. "genere musicale preferito") o numerico (es. "tempo medio trascorso su un sito web").
-
-Per confrontare due oggetti, viene utilizzata una funzione di **similarità** che, prendendo in ingresso i loro insiemi di features, restituisce un valore compreso tra 0 e 1. Un valore vicino a 1 indica una forte somiglianza, mentre un valore vicino a 0 suggerisce una scarsa relazione tra i due oggetti. La scelta della funzione dipende dal tipo di dati trattati: per dati testuali si utilizza spesso la similarità di Jaccard, mentre per dati numerici metriche come la distanza Euclidea o il coseno di similarità risultano più appropriate.
-
-**Es. 1**	Dati degli utenti U, abbiamo le features che sono dati personali, preferenze, navigazioni ... Vogliamo trovare gli utenti simili a Dave, e individuare i cluster di utenti simili. Qui possiamo applicare la distanza di Hamming.
+**Es. 1**	Dati degli utenti abbiamo le features che sono dati personali, preferenze, navigazioni ... Vogliamo trovare gli utenti simili a Dave, e individuare i cluster di utenti simili. Qui possiamo applicare la distanza di Hamming.
 
 ![](.\img\users.png)
 
-La **distanza di Hamming** è una metrica utilizzata per misurare la differenza tra due sequenze di uguale lunghezza. Si calcola contando il numero di posizioni in cui i simboli corrispondenti nelle due sequenze sono diversi. Questa misura è particolarmente utile in ambiti come il riconoscimento di errori nei codici, la biologia computazionale e il confronto di dati binari.
-
-Un esempio tipico si ha con stringhe binarie. Supponiamo di avere due sequenze:
+La **distanza di Hamming** è una metrica utilizzata per misurare la differenza tra due sequenze di uguale lunghezza. Si calcola contando il numero di posizioni in cui i simboli corrispondenti nelle due sequenze sono diversi. Un esempio tipico si ha con stringhe binarie. Supponiamo di avere due sequenze:
 
 - **A = 1011101**
 - **B = 1001001**
 
 Poiché le differenze sono in due posizioni, la distanza di Hamming tra queste stringhe è **2**. Tale approccio può essere usato nel contesto delle features caratterizzate da valori booleani come l'esempio appena visto.
 
-**Es. 2**	Dato un oggetto grafo $G(V,E)$ abbiamo le features che sono le liste di adiacenza sparse. L'obiettivo è trovare nodi simili a un nodo specifico, e individuare cluster di nodi simili. Qui possiamo usare il coefficiente di Jaccard, ovvero:
+**Es. 2**	Dato un oggetto grafo $G(V,E)$ abbiamo le features che sono le liste di adiacenza sparse. L'obiettivo è trovare nodi simili a un nodo u specifico. Qui possiamo usare il **coefficiente di Jaccard**, ovvero:
 $$
-JaccardCoeff=\frac{|N(u)\cap N(v)| }{|N(u)\cup N(v)| }
+\text{JaccardCoeff}=\frac{|N(u)\cap N(v)| }{|N(u)\cup N(v)| }
 $$
 
-- $N(u)$ è l'insieme dei nodi adiacenti a $u$ (i suoi vicini).
-- $N(v)$ è l'insieme dei nodi adiacenti a $v$ (i suoi vicini).
+- $N(u)$ è l'insieme dei nodi adiacenti a $u$.
+- $N(v)$ è l'insieme dei nodi adiacenti a $v$.
 - $|N(u) \cap N(v)|$ è il numero di vicini **comuni** tra $u$ e $v$.
 - $|N(u) \cup N(v)|$ è il numero totale di vicini **unici** considerando entrambi i nodi.
 
@@ -364,15 +284,7 @@ Il coefficiente di Jaccard misura **quanto i due nodi condividono gli stessi vic
 - Se $JaccardCoeff = 0$, significa che $u$ e $v$ **non condividono alcun vicino** e quindi sono completamente diversi.
 - Valori intermedi indicano un certo grado di somiglianza.
 
-**Es. 3**	Immaginiamo di avere dei documenti, utilizziamo la rappresentazione in spazio vettoriale per la rappresentazione dei documenti. Il peso di ciascun vettore viene rappresentato dal punteggio TF-IDF che misura l'importanza di un termine nel documento in relazione alla sua frequenza in tutti i documenti. Per calcolare i cluster di documenti simili possiamo utilizzare la Cosine Similarity, facendo il prodotto vettoriale tra due documenti.
-
-LSH utilizza un **approccio di hashing** per ridurre il numero di confronti necessari. Abbiamo delle funzioni che mappano i vettori ad alta dimensione in codici di hash a bassa dimensione, o bucket. Ogni funzione di hash è progettata per fare in modo che gli **oggetti simili** abbiano una probabilità maggiore di essere mappati nello stesso bucket. Questo riduce drasticamente il numero di confronti da fare ed esamina solo le coppie che finiscono nello **stesso bucket** per almeno una delle funzioni di hash. Non è una singola funzione, ma una **famiglia di tecniche correlate** che possono essere adattate a diversi tipi di misure di similarità (ad esempio, similarità del coseno, distanza di Hamming, similarità di Jaccard, ecc.). 
-
-Un aspetto importante da notare è che LSH offre una ricerca di **vicini più prossimi approssimativa**. Ciò significa che l'algoritmo potrebbe non trovare sempre i vicini più prossimi **esatti**, ma troverà quelli "abbastanza vicini", il che è spesso sufficiente nelle applicazioni pratiche. Per esempio, supponiamo di avere un dataset di documenti di testo rappresentati come vettori in uno spazio ad alta dimensione (ad esempio, vettori TF-IDF). Si desidera trovare documenti simili a una query data.
-
-Servizi come [Pinecone](https://www.pinecone.io/learn/vector-database/) offrono database vettoriali gestiti che sfruttano tecniche come LSH per la ricerca della similarità. Questi database semplificano l'interazione con i dati vettoriali ad alta dimensione, permettendo ricerche rapide ed efficienti sulla similarità e sul clustering.
-
-Nel problema della ricerca di punti simili in spazi ad alta dimensionalità l'obiettivo è trovare coppie di punti dati $x_1, x_2, \dots$ che siano **sufficientemente vicini** secondo una data funzione di distanza $d(x_i, x_j)$. Questo problema è molto comune in applicazioni come il riconoscimento delle immagini, la ricerca di documenti simili e i sistemi di raccomandazione.
+LSH utilizza un **approccio di hashing** per ridurre il numero di confronti necessari. Abbiamo delle funzioni che mappano i vettori ad alta dimensione in codici di hash a bassa dimensione. Ogni funzione di hash è progettata per fare in modo che gli **oggetti simili** abbiano una probabilità maggiore di essere mappati nello stesso bucket. Questo riduce drasticamente il numero di confronti da fare ed esamina solo le coppie che finiscono nello **stesso bucket** per almeno una delle funzioni di hash.
 
 Un'immagine può essere rappresentata come un vettore lungo, in cui ogni valore corrisponde al colore di un pixel. Ad esempio, prendiamo questa immagine 3x3:
 $$
@@ -386,18 +298,17 @@ Possiamo appiattirla in un vettore:
 $$
 [1, 2, 1, 0, 2, 1, 0, 1, 0]
 $$
-Questa trasformazione è comune quando si lavora con reti neurali o tecniche di clustering basate su distanze. Un approccio ingenuo confronterebbe **tutte le coppie di punti**, con una complessità di $O(N^2)$, dove $N$ è il numero di punti. Questo è proibitivo per dataset di grandi dimensioni. La magia sta nell'usare **Locality-Sensitive Hashing (LSH)** o altre tecniche di indicizzazione avanzate.
+Un approccio ingenuo confronterebbe **tutte le coppie di punti**, con una complessità di $O(N^2)$, dove $N$ è il numero di punti. Questo è proibitivo per dataset di grandi dimensioni. La magia sta nell'usare **Locality-Sensitive Hashing (LSH)** o altre tecniche di indicizzazione avanzate.
 
 Ci sono tre passi essenziali per documenti simili:
 
-- **Shingling:** Il primo passo consiste nel trasformare ogni documento in un **insieme di sottostringhe**, chiamate **shingles**. Un **shingle** è una sequenza di $k$ parole consecutive o caratteri estratti dal testo. Questo passaggio permette di rappresentare il documento come un **insieme di elementi confrontabili**, piuttosto che come un'unica stringa.
+- **Shingling:** Il primo passo consiste nel trasformare ogni documento in un **insieme di sottostringhe**, chiamate **shingles**. Questo passaggio permette di rappresentare il documento come un **insieme di elementi confrontabili**.
 - **Min-Hashing:** permette di ridurre la dimensione dei dati preservando la similarità. Il problema con gli shingles è che un documento diventa un insieme molto grande, difficile da confrontare direttamente. Si applicano **funzioni hash** agli shingles per ottenere una **firma compatta** del documento. Questo riduce drasticamente lo spazio necessario per archiviare i documenti e rende il confronto molto più veloce.
 - **Locality-Sensitive Hashing:** Anche con firme compatte, confrontare tutte le coppie sarebbe ancora inefficiente. **LSH** serve per concentrarsi solo sulle coppie **potenzialmente simili**. Si suddivide la firma MinHash in **bande**, ognuna delle quali viene **hashata in un bucket**. Se due documenti finiscono nello stesso bucket in almeno una banda, vengono considerati **candidati per il confronto**. Questo riduce enormemente il numero di confronti, passando da un approccio $O(N^2)$ a una ricerca molto più veloce.
 
 <img src=".\img\quadrocompleto.png" style="zoom:67%;" />
 
-Uno shingle viene detto k-shingle ovvero una sequenza di k tokens che appaiono nel documento, possono essere caratteri o parole. Per esempio se $D_1=abcab$ allora 2-shingle sono $S(D_1)=\{ab,bc,ca\}$ dove stiamo andando a considerare solo il set e non i pezzi ripetuti. Eventualmente possiamo estenderla considerando anche quelli, a seconda dei casi d'uso. Sostanzialmente documenti che hanno molti shingles in comune sono simili anche se appaiono in ordini diversi. Dobbiamo ovviamente scegliere un k sufficientemente grande altrimenti molti documenti saranno classificati come simili anche se non lo sono. Solitamente per documenti piccoli $k=5$, mentre per documenti lunghi $k=10$. Gli shingle vanno compressi e possiamo usare hash a 4 bytes. Possiamo quindi rappresentare il documento con il set degli hash values dei suoi k-shingles. 
-
+Per esempio se $D_1=abcab$ allora 2-shingle sono $S(D_1)=\{ab,bc,ca\}$ dove stiamo andando a considerare solo il set e non i pezzi ripetuti. Sostanzialmente documenti che hanno molti shingles in comune sono simili. Dobbiamo ovviamente scegliere un k sufficientemente grande altrimenti molti documenti saranno classificati come simili anche se non lo sono. 
 Per quantificare la somiglianza tra due documenti $D_1$ e $D_2$, si utilizza la **similarità di Jaccard**:
 $$
 sim(D_1, D_2) = \frac{|C_1 \cap C_2|}{|C_1 \cup C_2|}
@@ -411,41 +322,27 @@ Perchè usare Minhash/LSH? Su un milione di documenti dovremmo effettuare il con
 
 Molti problemi di similarità possono essere visti come il confronto tra **sottoinsiemi** di un insieme più grande, misurando quanto si sovrappongono. Un modo efficiente per rappresentare e confrontare questi insiemi è usare **vettori binari (0/1)**. Se un insieme contiene un determinato elemento, il valore in quella posizione è **1**, altrimenti è **0**.
 
-**Esempio:** $C_1 = (1,0,1,1,1), \quad C_2 = (1,0,0,1,1)$
-
-La **similarità di Jaccard** si calcola come:
+**Esempio:** $C_1 = (1,0,1,1,1), \quad C_2 = (1,0,0,1,1)$	La **similarità di Jaccard** si calcola come:
 $$
-J(C_1, C_2) = \frac{|C_1 \cap C_2|}{|C_1 \cup C_2|}
+J(C_1, C_2) = \frac{|C_1 \cap C_2|}{|C_1 \cup C_2|} = \frac{3}{4} = 0.75
 $$
-Interpretando operazioni sugli insiemi come operazioni bitwise:
-
-- **Intersezione** $C_1 \cap C_2$ → Bitwise AND ($\&$): $(1,0,1,1,1) \& (1,0,0,1,1) = (1,0,0,1,1)  \quad \text{(3 elementi a 1)}$
-- **Unione** $C_1 \cup C_2$ → Bitwise OR ($|$): $(1,0,1,1,1) | (1,0,0,1,1) = (1,0,1,1,1)  \quad \text{(4 elementi a 1)}$
-- **Calcolo della Similarità**: $J(C_1, C_2) = \frac{3}{4} = 0.75$
-
 Ne segue che la distanza è $d(C_1, C_2) = 1 - 0.75 = 0.25$.
 
-Per confrontare documenti sulla base dei loro **shingles**, possiamo rappresentarli in una **matrice binaria sparsa**, dove:
-
-- Le righe rappresentano gli elementi (shingles).
-- Le colonne rappresentano gli insiemi (documenti).
-- L'elemento della matrice $M_{e,s} = 1$ se e solo se lo shingle $e$ è presente nel documento $s$.
-
-Questa struttura è utile perché permette di applicare efficientemente la **similarità di Jaccard** tra documenti. 
+Per confrontare documenti sulla base dei loro **shingles**, possiamo rappresentarli in una **matrice binaria sparsa**, dove le righe rappresentano gli elementi (shingles) e le colonne rappresentano gli insiemi (documenti). L'elemento della matrice $M_{e,s} = 1$ se e solo se lo shingle $e$ è presente nel documento $s$.
 
 ![](.\img\row.png)
 
-Ci chiediamo per esempio $sim(C_1, C_2)$, troviamo che l'intersezione è 3, l'unione è 6, quindi Jaccard Similarity è 3/6 e la distanza è 3/6. Quindi finora abbiamo capito come trovare la similarità tra documenti, il prossimo passo è farlo confrontando signature più piccole in quanto può essere vista come la similarity delle signatures. Confrontare tutte le coppie potrebbe essere un approccio non ottimale, quindi meglio usare LSH.
+Ci chiediamo per esempio $sim(C_1, C_2)$, troviamo che l'intersezione è $3$, l'unione è $6$, quindi Jaccard Similarity è $\frac36$ e la distanza è $1-\frac36$. 
 
-L'idea è quella di hashare ogni colonna in una signature piccola $h(C)$ così che possa entrare in RAM, calcolare la similarity sulle colonne o sulle signature hashate è la stessa cosa. Quindi l'obiettivo è trovre una funzione hash così che se $sim(C_1, C_2 )$ è alto, allora c'è alta probabilità che $h(C_1)=h(C_2)$. Viceversa se sim è bassa allora le due hash probabilmente saranno diverse, cioè finiscono in bucket diversi. 
+Quindi finora abbiamo capito come trovare la similarità tra documenti, il prossimo passo è farlo confrontando signature più piccole in quanto può essere vista come la similarity delle signatures. L'idea è quella di hashare ogni colonna in una signature piccola $h(C)$. Ci serve una funzione hash così che se $sim(C_1, C_2 )$ è alto, allora c'è alta probabilità che $h(C_1)=h(C_2)$.
 
-L'idea è di applicare una **permutazione casuale** delle righe della **matrice booleana** e poi assegnare a ogni colonna (documento) una firma compatta, detta **MinHash signature**.
+L'idea è di applicare una **permutazione casuale** delle righe della **matrice booleana** e poi assegnare a ogni colonna una **MinHash signature**.
 
 Sia $\pi$ una permutazione casuale delle righe della matrice. Definiamo la funzione di hash associata alla permutazione come:
 $$
 h_\pi(C) = \min_{\pi} \pi(C)
 $$
-Dove $h_\pi(C)$ restituisce **l’indice della prima riga (secondo la permutazione $\pi$) in cui la colonna $C$ ha valore 1**. Per ogni documento, ripetiamo il processo più volte con **diverse permutazioni casuali** e otteniamo una **firma MinHash** fatta di più valori di $h_\pi(C)$. La **probabilità che due documenti abbiano lo stesso valore di MinHash** per una permutazione è approssimativamente uguale alla loro **similarità di Jaccard**.
+$h_\pi(C)$ restituisce **l’indice della prima riga (secondo la permutazione $\pi$) in cui la colonna $C$ ha valore 1**. Per ogni documento, ripetiamo il processo più volte con **diverse permutazioni casuali** e otteniamo una **firma MinHash** fatta di più valori di $h_\pi(C)$. La **probabilità che due documenti abbiano lo stesso valore di MinHash** per una permutazione è approssimativamente uguale alla loro **similarità di Jaccard**.
 $$
 P(h_\pi(C_1) = h_\pi(C_2)) \approx J(C_1, C_2)
 $$
@@ -459,72 +356,46 @@ Parliamo adesso della proprietà del MinHashing, quindi fissata una permutazione
 $$
 P[h_\pi(C_1)=h_\pi(C_2)] = sim(C_1,C_2)
 $$
-Infatti, sia $X$ un documento (quindi un set di shingles) e sia $y \in X$ una shingle del documento. Allora:
-$$
-P[\pi(y)=min(\pi(X))] = \frac{1}{|X|}
-$$
- Sia $y$ tale che $\pi(y)=min(\pi(C_1\cup C_2))$ allora sono due le possibilità
+Infatti, sia $X$ un set di shingles e sia $y \in X$ una shingle del documento. Sia $y$ tale che $\pi(y)=min(\pi(C_1\cup C_2))$ allora sono due le possibilità
 
 1. $\pi(y)=min(\pi(C_1))$ se $y\in C_1$ 
-2. $\pi(y)=min(\pi(C_2))$ se $y\in C_1$
+2. $\pi(y)=min(\pi(C_2))$ se $y\in C_2$
 
 Quindi la probabilità che entrambe siano vere cioè che $y\in C_2 \cap C_2$ è:
 $$
 P[min(\pi(C_1))=min(\pi(C_2))] = \frac{|C_1\cap C_2|}{|C_1\cup C_2|} = sim(C_1, C_2)
 $$
-Quindi sostanzialmente la probabilità che $h_\pi(C_1)=h_\pi(C_2)$ è righe con entrambe le colonne 1 fratto le righe con almeno una delle colonne 1, cioè la similarity. L'intersezione e l'unione della formula sopra operano rispettivamente come AND e OR Bitwise.
-
-Computazionalmente parlando calcolare la similarità sugli hashing è meglio, infatti la similarità tra $Sign(C_1)$ e $Sign(C_2)$ è:
-$$
-Sim(Sign(C_1),Sign(C_2)) = \frac{righe\ con\ h_\pi(C_1)=h_\pi(C_2)}{numero\ tot.\ righe}=P[h_\pi(C_1)=h_\pi(C_2)] = Sim(C_1,C_2)
-$$
-*Correttezza del Min-Hashing - Skip*
-
-Sappiamo che la probabilità che due colonne abbiano la stessa funzione hash corrisponde alla loro similarità. Questo concetto può essere esteso utilizzando più funzioni di hash: in questo caso, la similarità tra due firme viene calcolata come la frazione di funzioni di hash per cui esse coincidono. 
-
-Tornando all'esempio dell'immagine precedente possiamo vedere la differenza tra la similarity tra colonne e tra signatures e noteremo che seppur leggermente diversi comunque si avvicinano l'un l'altro. Questo effetto credo che sia mitigato se abbiamo a che fare con molto testo.
+Tornando all'esempio dell'immagine precedente possiamo vedere la differenza tra la similarity tra colonne e tra signatures e noteremo che seppur leggermente diversi comunque si avvicinano l'un l'altro.
 
 |             | 1 e 3 | 2 e 4 | 1 e 2 | 3 e 4 |
 | ----------- | ----- | ----- | ----- | ----- |
 | **Col/Col** | 0.75  | 0.75  | 0     | 0     |
 | **Sig/Sig** | 0.67  | 1.00  | 0     | 0     |
 
-Ricorda che la prima si calcola con AND fratto OR, mentre la seconda l'abbiamo appena vista.
-
-Prendiamo per esempio $K=100$ permutazioni random delle righe per avere stime più esatte. Applichiamo l'hash function ad ogni permutazione e la firma del documento sarà un vettore di $K$ valori. Formalmente $Sig(C)[i]=min(\pi_i(C))$. Nota bene che la signature del documento è solo 100 bytes se abbiamo hash a 4 byte quindi piccola, e abbiamo compresso un lungo vettore di bit in una signature più gestibile!
-
 Trick: permutare le righe in realtà non è così immediato, possiamo usare anche qui l'hashing. 
-
-<img src=".\img\scanrows.png" style="zoom: 67%;" />
-
-
 
 
 
 ## Lezione 5 - Locality Sensitive Hashing
 
-La Locality Sensitive Hashing (LSH) si basa sull'idea fondamentale di generare un *sketch* per ogni oggetto soddisfi due proprietà principali:
+La **Locality Sensitive Hashing (LSH)** si basa sull'idea fondamentale di generare un *sketch* per ogni oggetto soddisfi due proprietà principali:
 
 1. Deve essere molto più corto rispetto al numero totale di caratteristiche ($d$) dell'oggetto originale
 2. Se due oggetti sono simili nello spazio originale, avranno una probabilità elevata di essere rappresentati dallo stesso *sketch* dopo l'hashing
 
-Non garantisce risultati esatti, ma è corretto con alta probabilità. Questo approccio probabilistico è spesso l'unica soluzione praticabile quando si lavora con dataset di grandi dimensioni.
+Definiamo una funzione di hash $h$ che seleziona un sottoinsieme $I$ con $r$ coordinate casuali dal vettore originale. L'output della funzione di hash è la proiezione del vettore originale sulle coordinate scelte. Ad esempio, se scegliamo $r = 2$ e il sottoinsieme di indici è $I = \{1,4\}$, allora per un vettore $p = 01011$, la sua versione compressa sarà data solo dai valori nelle posizioni 1 e 4, ovvero $h(p) = 01$. 
 
-Per applicare la *Locality Sensitive Hashing*, definiamo una funzione di hash $h$ che seleziona un sottoinsieme $I$ con $r$ coordinate casuali dal vettore originale. L'output della funzione di hash è la proiezione del vettore originale sulle coordinate scelte. Ad esempio, se scegliamo $r = 2$ e il sottoinsieme di indici è $I = \{1,4\}$, allora per un vettore $p = 01011$, la sua versione compressa sarà data solo dai valori nelle posizioni 1 e 4, ovvero $h(p) = 01$. Questo approccio consente di ridurre la dimensionalità del problema poiché quelli con una distanza di Hamming ridotta avranno una maggiore probabilità di condividere lo stesso valore di hash.
-
-Una proprietà chiave della Locality Sensitive Hashing nel caso della distanza di Hamming è la probabilità che due vettori $p$ e $q$ abbiano lo stesso valore di hash in base alla selezione casuale delle coordinate.
-
-Questa probabilità è data da:
+La probabilità che due vettori $p$ e $q$ abbiano lo stesso valore di hash in base alla selezione casuale delle coordinate è:
 $$
-Pr[\text{picking } x : p[x] = q[x]] = \frac{d - D(p, q)}{d}
+Pr[p[x] = q[x]] = 1 -\frac{D(p, q)}{d}
 $$
-Dove $d$ è la dimensione totale dei vettori binari, $D(p, q)$ è la distanza di Hamming. Maggiore è il numero di bit uguali tra i due vettori, maggiore sarà la probabilità che la funzione di hash li assegni allo stesso *bucket*.
+Dove $d$ è la dimensione dei vettori e $D(p, q)$ è la distanza di Hamming. Maggiore è il numero di bit uguali tra i due vettori, maggiore sarà la probabilità che la funzione di hash li assegni allo stesso *bucket*.
 
 Possiamo quindi definire:
 $$
 P[h(p)=h(q)]=\Bigg(1-\frac{D(p,q)}{d}\Bigg) ^r = S^r
 $$
-Dove $S^r$ è la similarity tra i due vettori. Possiamo controllare questa probabilità variando il numero di coordinate selezionate, cioè $r$. Se $r$ è piccolo, la probabilità che due vettori simili vengano mappati allo stesso valore di hash è più alta. Se $r$ è grande, la discriminazione aumenta e i vettori con anche piccole differenze saranno più facilmente separati e possiamo ridurre i falsi positivi. 
+Dove $S^r$ è la similarity tra i due vettori. Possiamo controllare questa probabilità variando il numero di coordinate selezionate, cioè $r$. Se $r$ è piccolo, la probabilità che due vettori simili vengano mappati allo stesso valore di hash è più alta. Se $r$ è grande, la discriminazione aumenta e i vettori con piccole differenze saranno più facilmente separati e possiamo ridurre i falsi positivi. 
 
 Per ridurre i **falsi negativi** nella LSH possiamo ripetere il processo di hashing più volte utilizzando il concetto di *banding*. L'idea è di eseguire il hashing $b$ volte, ognuna con una proiezione indipendente del vettore.
 
@@ -571,8 +442,6 @@ Quando $s$ è molto alto (cioè i vettori sono molto simili), la probabilità di
 ![](.\img\scurve.png)
 
 L'area arancione sono i falsi negativi, mentre quella verde sono i falsi positivi. La linea rossa è la threshold.
-
-Demo: https://www.desmos.com/calculator/lzzvfjiujn
 
 **Es.1**	Immaginiamo di avere:
 
