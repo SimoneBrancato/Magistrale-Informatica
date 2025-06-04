@@ -238,18 +238,14 @@ MapReduce è più adatto a lavori che richiedono **operazioni a passaggio singol
 
 ## Lezione 4 - Similarity Search
 
-Nel contesto dei **Big Data**, trovare elementi simili è un problema cruciale in molte applicazioni, come il rilevamento di documenti duplicati, il clustering di utenti con preferenze simili e la raccomandazione di contenuti. L'obiettivo è identificare elementi simili in modo efficiente, senza dover confrontare ogni coppia possibile, il che sarebbe proibitivo su dataset di grandi dimensioni. L'idea di base è ridurre il numero di confronti effettuando una pre-selezione intelligente delle coppie da analizzare più in dettaglio.
+Nel contesto dei **Big Data**, trovare elementi simili è un problema cruciale in molte applicazioni, come il rilevamento di documenti duplicati, il clustering di utenti con preferenze simili e la raccomandazione di contenuti. L'obiettivo è identificare elementi simili in modo efficiente, e l'idea di base è ridurre il numero di confronti effettuando una pre-selezione intelligente delle coppie da analizzare più in dettaglio.
 
-Lo **Shingling** è una tecnica che trasforma i documenti in insiemi di sottostringhe (shingles o k-grammi).
-
-- Un **shingle** di lunghezza $k$ è una sequenza di $k$ caratteri consecutivi estratti da un documento.
-- Questa tecnica converte un documento testuale in un insieme, permettendo di calcolare la **similarità di Jaccard** tra due documenti.
-- Più alto è il valore della similarità di Jaccard tra due insiemi di shingles, maggiore è la probabilità che i documenti siano simili.
+Lo **Shingling** è una tecnica che trasforma i documenti in insiemi di sottostringhe. Un **shingle** di lunghezza $k$ è una sequenza di $k$ caratteri consecutivi estratti da un documento. Questa tecnica converte un documento testuale in un insieme, permettendo di calcolare la **similarità di Jaccard** tra due documenti. Più alto è il valore della similarità di Jaccard tra due insiemi di shingles, maggiore è la probabilità che i documenti siano simili.
 
 Esempio: Per la frase *"hello world"*, con **shingles di lunghezza 3**, otteniamo: 
 	"hel", "ell", "llo", "lo ", "o w", " wo", "wor", "orl", "rld"
 
-Il **MinHashing** è una tecnica di compressione degli insiemi di shingles che permette di ridurre la loro dimensione senza perdere troppa informazione sulla similarità. Converte un insieme in una firma più compatta (minhash signature), utilizzando funzioni di hashing che garantiscono una distribuzione uniforme. La probabilità che due insiemi abbiano la stessa firma MinHash è approssimativamente uguale alla loro **similarità di Jaccard**.
+Il **MinHashing** converte un insieme di shingles in una firma più compatta detta minhash signature. La probabilità che due insiemi abbiano la stessa firma MinHash è approssimativamente uguale alla loro **similarità di Jaccard**.
 
 Il **Locality-Sensitive Hashing (LSH)** è una tecnica che utilizza funzioni di hashing per raggruppare elementi simili in bucket comuni, aumentando la probabilità che due elementi simili vengano confrontati direttamente. LSH riduce drasticamente il numero di confronti richiesti. È particolarmente utile in scenari con grandi dataset, come la rilevazione di spam, il plagiarism detection e la ricerca di immagini simili.
 
@@ -378,11 +374,6 @@ Trick: permutare le righe in realtà non è così immediato, possiamo usare anch
 
 ## Lezione 5 - Locality Sensitive Hashing
 
-La **Locality Sensitive Hashing (LSH)** si basa sull'idea fondamentale di generare un *sketch* per ogni oggetto soddisfi due proprietà principali:
-
-1. Deve essere molto più corto rispetto al numero totale di caratteristiche ($d$) dell'oggetto originale
-2. Se due oggetti sono simili nello spazio originale, avranno una probabilità elevata di essere rappresentati dallo stesso *sketch* dopo l'hashing
-
 Definiamo una funzione di hash $h$ che seleziona un sottoinsieme $I$ con $r$ coordinate casuali dal vettore originale. L'output della funzione di hash è la proiezione del vettore originale sulle coordinate scelte. Ad esempio, se scegliamo $r = 2$ e il sottoinsieme di indici è $I = \{1,4\}$, allora per un vettore $p = 01011$, la sua versione compressa sarà data solo dai valori nelle posizioni 1 e 4, ovvero $h(p) = 01$. 
 
 La probabilità che due vettori $p$ e $q$ abbiano lo stesso valore di hash in base alla selezione casuale delle coordinate è:
@@ -395,7 +386,10 @@ Possiamo quindi definire:
 $$
 P[h(p)=h(q)]=\Bigg(1-\frac{D(p,q)}{d}\Bigg) ^r = S^r
 $$
-Dove $S^r$ è la similarity tra i due vettori. Possiamo controllare questa probabilità variando il numero di coordinate selezionate, cioè $r$. Se $r$ è piccolo, la probabilità che due vettori simili vengano mappati allo stesso valore di hash è più alta. Se $r$ è grande, la discriminazione aumenta e i vettori con piccole differenze saranno più facilmente separati e possiamo ridurre i falsi positivi. 
+Dove $S^r$ è la similarity tra i due vettori. 
+
+- Se $r$ è piccolo, la probabilità che due vettori simili vengano mappati allo stesso valore di hash è più alta. 
+- Se $r$ è grande, la discriminazione aumenta e i vettori con piccole differenze saranno più facilmente separati e possiamo ridurre i falsi positivi. 
 
 Per ridurre i **falsi negativi** nella LSH possiamo ripetere il processo di hashing più volte utilizzando il concetto di *banding*. L'idea è di eseguire il hashing $b$ volte, ognuna con una proiezione indipendente del vettore.
 
@@ -419,25 +413,13 @@ Dal risultato si nota che $h_3(p) = h_3(q)$, quindi almeno una funzione di hash 
 
 Se aumentassimo $b$ riduciamo la probabilità di falsi negativi. Questo avviene perché, anche se una funzione di hash fallisce nel riconoscere la similarità, altre potrebbero riuscirci.
 
-La funzione aggregata $g(p)$ è costituita da $b$ funzioni di hash indipendenti $h_i$. Per calcolare la probabilità che due vettori $p$ e $q$ **non siano considerati simili** (ossia che nessuna delle funzioni di hash produca lo stesso valore), si procede come segue:
-$$
-Pr[p \text{ non-simile } q] = Pr[h_i(p) \neq h_i(q), \forall i=1, \dots, b]
-$$
-Dato che gli hash sono indipendenti, la probabilità di fallire in tutti i $b$ tentativi è data dal prodotto delle singole probabilità di fallimento:
-$$
-Pr[p \text{ non-simile } q] = (Pr[h_i(p) \neq h_i(q)])^b = (1-Pr[h_i(p) = h_i(q)])^b
-$$
 La funzione probabilistica che descrive la probabilità che due vettori $p$ e $q$ siano considerati simili in LSH segue una **S-curve**, data dalla formula:
 $$
-Pr[\text{p simile a q}] = 1 - (1 - s^r)^b
+P[\text{p simile a q}] = 1 - (1 - s^r)^b
 $$
-Dove:
+Dove $(1 - s^r)^b$ è la probabilità che **tutte** le $b$ bands falliscano nel riconoscere la similarità. Sottraendo il risultato da 1, otteniamo la probabilità complessiva che **almeno una** delle bands riconosca $p$ e $q$ come simili.
 
-- $(1 - s^r)$ è la probabilità che una singola band **fallisca** nel riconoscere $p$ e $q$ come simili.
-- $(1 - s^r)^b$ è la probabilità che **tutte** le $b$ bands falliscano nel riconoscere la similarità.
-- Sottraendo il risultato da 1, otteniamo la probabilità complessiva che **almeno una** delle bands riconosca $p$ e $q$ come simili.
-
-Quando $s$ è molto alto (cioè i vettori sono molto simili), la probabilità di riconoscerli come tali è molto alta. Viceversa, quando $s$ è molto basso la probabilità di considerarli simili si riduce drasticamente. L'andamento della funzione crea una curva a "S", mostrando una transizione netta tra vettori considerati simili e vettori considerati diversi. Nella situazione ideale, vorremmo che una volta raggiunta la threshold si consideri automaticamente la similarità. In casi reali, invece, abbiamo anche falsi negativi e falsi positivi, identificati nel grafico dalle aree arancioni e verdi.
+Quando la similarità è molto alta, la probabilità di riconoscerli come tali è molto alta, e ovviamente succede anche il viceversa. Nella situazione ideale, vorremmo che una volta raggiunta la threshold si consideri automaticamente la similarità. In casi reali, invece, abbiamo anche falsi negativi e falsi positivi, identificati nel grafico dalle aree arancioni e verdi.
 
 ![](.\img\scurve.png)
 
@@ -452,23 +434,23 @@ L'area arancione sono i falsi negativi, mentre quella verde sono i falsi positiv
 
 Immaginiamo che le colonne $C_1, C_2$ abbiano similarità $0.8$, significa che vogliamo che vengano classificate come simili, quindi almeno una band dovrebbe essere uguale.
 $$
-Pr[match\ in\ una\ band\ particolare]=s^r=0.8 ^5=0.328
+Pr[\text{match in una band particolare}]=s^r=0.8 ^5=0.328
 $$
 Quindi:
 $$
-Pr[nessun\ match \ in\ 20\ band] = (1-0.328)^{20}=0.00035
+Pr[\text{nessun match in 20 band}] = (1-0.328)^{20}=0.00035
 $$
-Elementi con similarità almeno 0.8 saranno classificati come simili nel 99.965% dei casi.
+In questa situazione, elementi con similarità 0.8 saranno classificati come simili nel 99.965% dei casi.
 
 **Es.2**	Prendiamo lo stesso esempio ma considerando che le due colonne abbiano in effetti similarità $0.3$, pertanto non le vorremmo considerare coppie candidate. In questo caso si ha:
 $$
-Pr[match\ in\ una\ band\ particolare]=s^r=0.3 ^5=0.00243
+Pr[\text{match in una band particolare}]=s^r=0.3 ^5=0.00243
 $$
 Ne segue che 
 $$
-Pr[nessun\ match \ in\ almeno \ una \ band] = 1-(1-0.00243)^{20}=0.0474
+Pr[\text{match in almeno una band}] = 1-(1-0.00243)^{20}=0.0474
 $$
-Quindi avremo comunque il 4,75% di possibilità di classificarli lo stesso come coppie candidate, quindi falsi positivi.
+Quindi avremo comunque il 4,75% di possibilità di classificarli lo stesso come coppie candidate, un falso positivo.
 
 Vediamo adesso l'algoritmo generale per la LHS.
 
@@ -478,9 +460,9 @@ $$
 g(p) = \langle h_1(p), h_2(p), ..., h_b(p) \rangle
 $$
 
-​	dove ogni $h_i(p)$ rappresenta l'hash del vettore sulla i-esima band. Si dice $Sketch(p)$.
+​	dove ogni $h_i(p)$ rappresenta l'hash del vettore sulla i-esima band.
 
-2. **Creazione dei clustering $C_i$**: per ogni **band** $i$ ($i = 1, 2, ..., b$) si creano **cluster** raggruppando insieme i vettori $p$ e $q$ che hanno almeno uno stesso valore hash $h_i(p) = h_i(q)$. Si dice $Sort$.
+2. **Creazione dei clustering $C_i$**: per ogni **band** $i$ si creano **cluster** raggruppando insieme i vettori $p$ e $q$ che hanno almeno uno stesso valore hash $h_i(p) = h_i(q)$.
 
 3. **Costruzione del grafo dei candidati**: si crea un **grafo non orientato**, in cui ogni vettore $p$ è un nodo. Si crea un collegamento tra due nodi $p$ e $q$ **se almeno una band li ha raggruppati insieme** in un cluster $C_i$.
 
@@ -488,23 +470,11 @@ $$
 
 
 
-
-
 ## Lezione 6 - LSH Tuning
 
-Il prossimo step è ottimizzare LHS, quindi il passaggio di LHS Tuning. Vogliamo impostare $M, b, r$ così da considerare tutte le coppie con firme simili (riducendo i falsi negativi) ed eliminare la maggior parte delle coppie che non sono simili (riducendo i falsi positivi). Ricordiamo che $b$ è il numero di funzioni hash applicate (ridurre falsi negativi), $r$ il numero di features incluse nella proiezione (ridurre falsi positivi), $M$ la matrice.
+Il prossimo step è ottimizzare LHS, quindi il passaggio di LHS Tuning. Vogliamo impostare $M, b, r$ così da ridurre i falsi negativi e falsi positivi.
 
 <img src=".\img\scurve2.png" style="zoom:80%;" />
-
-Le funzioni locality-sensitive (LSH) sono un insieme di funzioni progettate per distinguere coppie di elementi vicini da quelle lontane in uno spazio di similarità, con l'obiettivo di ridurre il costo computazionale della ricerca di elementi simili. 
-
-Oltre alla MinHash vista in precedenza, esistono altre famiglie di funzioni LSH che soddisfano tre condizioni fondamentali:
-
-1. **Priorità ai vicini**: le coppie di elementi con una distanza ridotta devono avere una probabilità più alta di essere considerate simili rispetto a coppie con distanza elevata.
-2. **Indipendenza statistica**: è necessario stimare la probabilità che due o più funzioni locality-sensitive restituiscano la stessa risposta per una coppia di elementi, garantendo che i risultati non siano casuali ma statisticamente significativi.
-3. **Efficienza computazionale**: l'identificazione delle coppie candidate deve avvenire in un tempo molto inferiore rispetto a quello richiesto per calcolare tutte le distanze tra le coppie possibili. Le funzioni devono essere combinabili riducendo sia i falsi positivi che i falsi negativi.
-
-Questi principi permettono di progettare algoritmi efficienti per la ricerca approssimata di elementi simili in grandi dataset.
 
 Una funzione locality-sensitive è una funzione che prende in input due elementi e decide se questi devono essere considerati una **coppia candidata**
 
@@ -515,135 +485,8 @@ Un insieme di queste funzioni viene chiamato **famiglia di funzioni locality-sen
 
 Si dice che una famiglia di funzioni $F$ è $(d_1, d_2, p_1, p_2)$-sensibile se, per ogni funzione $f$ appartenente a $F$:
 
-- Se $d(x,y)\le d_1$, allora la probabilità che $f(x) = f(y)$ è almeno $p_1$ (alta probabilità candidati)
+- Se $d(x,y)\le d_1$, allora la probabilità che $f(x) = f(y)$ è minimo $p_1$ (alta probabilità candidati)
 - Se $d(x,y)\ge d_2$, allora la probabilità che $f(x) = f(y)$ è al massimo $p_2$ (bassa probabilità candidati)
-
-Nel caso della LHS con MinHash abbiamo:
-
-- **S** = insieme di tutti i possibili insiemi.
-- **d** = distanza di Jaccard, definita come $d(x, y) = 1 - J(x, y)$, dove $J(x, y)$ è la similarità di Jaccard.
-- **H** = famiglia di funzioni di Min-Hash generate da tutte le possibili permutazioni delle righe
-
-Per ogni funzione di hash $h$ appartenente alla famiglia $H$:
-$$
-Pr[h(x) = h(y)] = 1 - d(x, y)
-$$
-Pertanto meno sono distanti più è probabile che siano considerati candidati.
-
-Quando si utilizza la **distanza di Jaccard**, la famiglia di funzioni di MinHash è $(d_1, d_2, 1 - d_1, 1 - d_2)-$sensibile, il che significa che la probabilità di collisione tra due elementi dipende direttamente dalla loro similarità di Jaccard, e questo con $0<d_1<d_2<1$. Per altre distanze non c'è garanzia che sia locality-sensitive. 
-
-La famiglia MinHash **H** è una famiglia $(\frac13, \frac23, \frac23, \frac13)-$sensibile per l’insieme **S** e la distanza di Jaccard **d**.
-Ciò significa che se la distanza di Jaccard tra due insiemi è  $<\frac13$, la probabilità che abbiano lo stesso valore di MinHash è $>\frac23$, altrimenti se la distanza di Jaccard tra due insiemi è$>\frac23$, la probabilità che abbiano lo stesso valore di MinHash è $<\frac13$.
-
-L'effetto **"S-Curve"**, osservato nel caso di **MinHashing con la tecnica delle bande**, può essere generalizzato a qualsiasi famiglia di funzioni **Locality-Sensitive**. La tecnica delle bande utilizzata per le **matrici delle firme** si applica anche in contesti più generali. Infatti, è possibile eseguire **Locality-Sensitive Hashing (LSH)** con qualsiasi famiglia $(d_1, d_2, 1 - d_1, 1 - d_2)-$sensibile. 
-
-In effetti possiamo applicare due metodologie:
-
-- **AND-Construction:** costruiamo una nuova famiglia di funzioni $F'$ dove ogni funzione $f$ è costruita da $r$ membri di $F$ per qualche $r$ fissato. Si ha che $f(x)=f(y)$ se e solo se le funzioni in famiglia coincidono tutte! Questo abbassa la probabilità dei falsi positivi ma aumenta i falsi negativi, pertanto stiamo in generale abbassando tutte le probabilità. La nuova famiglia $F'$ sarà $(d_1, d_2, p_1^r, p_2^r)-$sensibile.
-
-  La probabilità che due funzioni hash restituiscano lo stesso valore per una coppia di elementi è approssimativamente il **prodotto** delle probabilità individuali. Tuttavia, due funzioni hash specifiche potrebbero essere **altamente correlate**. Nonostante questa possibile correlazione le probabilità di successo sono calcolate considerando **tutte le possibili funzioni hash nella famiglia** $H$ quindi nel caso medio funziona.
-
-- **OR-Construction:** costruiamo una nuova famiglia di funzioni $F'$ dove ogni funzione $f$ è costituita da $b$ membri di $F$ per un certo $b$ fissato. Si ha che $f(x)=f(y)$ se anche solo una funzione coincide! La nuova famiglia sarà $(d_1, d_2, 1-(1-p_1)^r, 1-(1-p_2)^r)-$sensibile. Questo rende l'algoritmo più permissivo, stiamo riducendo i falsi negativi ma rischiamo di aumentare i falsi positivi (ovviamente, stiamo in qualche modo aumentando tutte le probabilità)
-
-Le costruzioni **AND** e **OR** in LSH possono essere combinate in sequenza per ottenere un miglioramento significativo nel controllo delle probabilità di selezione. Questo approccio consente di avvicinarsi a una distinzione perfetta tra coppie simili e non simili. Possiamo ridurre drasticamente la probabilità di selezionare coppie non simili (falsi positivi) rendendo le probabilità basse praticamente nulle, ed aumentare la probabilità di selezionare coppie simili (veri positivi), facendo in modo che le probabilità siano molto vicine a 1.
-
-**Es.**	$(0.2, 0.8, 0.8, 0.2)-$sensitive, con $b=4$ e $r=4$. 
-
-Questa è una configurazione iniziale della famiglia LSH, la probabilità che due elementi simili vengano selezionati come candidati è **0.8**, mentre la probabilità che due elementi non simili vengano selezionati è **0.2**. 
-
-- **AND-OR**: la probabilità per le **coppie simili** dopo l'operazione **AND** si riduce.
-  $$
-  P_{\text{simili AND}} = 0.8 \times 0.8 = 0.64
-  $$
-  La probabilità per le **coppie non simili** dopo l'operazione **AND** si riduce anch'essa:
-  $$
-  P_{\text{non simili AND}} = 0.2 \times 0.2 = 0.04**OR**
-  $$
-  Adesso applichiamo la costruzione **OR**, la probabilità per le coppie simili aumenta.
-  $$
-  P_{\text{simili OR}} = 1 - (1 - 0.64)^4 \approx 0.878
-  $$
-  La probabilità per le coppie non simili diminuisce:
-  $$
-  P_{\text{non simili OR}} = 1 - (1 - 0.04)^4 \approx 0.0064
-  $$
-
-​	Quindi è diventato $(0.2, 0.8, 0.9936, 0.1215)-$sensitive. 
-​	Analogamente possiamo calcolare gli altri casi in sequenza dopo il risultato appena raggiunto.
-
-- **OR-AND**: $(0.2, 0.8, 0.9936, 0.1215)-$sensitive
-- **OR-AND**: $(0.2, 0.8, 0.9999996, 0.0008715)-$sensitive
-
-Demo: [Locality Sensitive Hashing — Threshold + Banding Exploration | Desmos](https://www.desmos.com/calculator/lzzvfjiujn?lang=it)
-
-
-
-Finora abbiamo utilizzato le distanze di Jaccard e Hamming, che misurano quanto due insiemi siano vicini. Ma abbiamo anche altre alternative. La distanza di Hamming consiste nel contare il numero dei componenti in cui due vettori differiscono.
-
-Immaginiamo di avere due vettori $x$ e $y$ di dimensione $d$, e denotiamo la loro distanza di Hamming come $h(x,y)$. Definiamo la funzione $f_i(x)$ come il valore della $i$-esima posizione nel vettore, quindi se la $i$-esima posizione nei vettori è uguale avremo $f_i(x)=f_i(y)$. La probabilità che si verifichi questo evento può essere calcolata come:
-$$
-1-\frac{f(x,y)}{d}
-$$
-E la famiglia delle funzioni $f_i$, ovvero $F$, è $(d_i,d_2,1-\frac{d_1}{d}, 1-\frac{d_2}{d})$-sensitive con $d_1<d_2$.
-
-> ChatGPT: Perchè $d_1<d_2$?
->
-> La famiglia delle funzioni LSH è definita come **$(d_1, d_2, p_1, p_2)$-sensibile**, il che significa che:
->
-> - Se due vettori hanno distanza **al massimo $d_1$**, la probabilità che vengano mappati alla stessa posizione (cioè $f(x) = f(y)$) è **alta** ($p_1$).
-> - Se due vettori hanno distanza **almeno $d_2$**, la probabilità che vengano mappati alla stessa posizione è **bassa** ($p_2$).
->
-> Affinché questa proprietà sia significativa, è necessario che **$d_1 < d_2$**, perché:
->
-> 1. **Se $d_1 = d_2$**, non avremmo un criterio efficace per distinguere coppie vicine da coppie lontane.
-> 2. **Se $d_1 > d_2$**, avremmo il problema opposto: le coppie più distanti avrebbero una maggiore probabilità di collisione rispetto a quelle più vicine.
-
-
-
-Esiste anche la distanza coseno. Consiste in una misura nello spazio Euclideo, si usa il coseno dell'angolo tra i vettori associati ai punti considerati.
-$$
-d(A,B)=\theta=\arccos \left(\frac{A\cdot B}{||A||\cdot ||B||} \right) 
-$$
-
-Che ha ovviamente valori in $[0,\pi]$, cioè l'angolo ha sempre valore tra 0 e 180 gradi. 
-
-Pertanto possiamo considerare:
-$$
-d([x_1,...,x_n],[y_1,...,y_n])=1-\frac{A\cdot B}{||A||\cdot ||B||}
-$$
-dove $A \cdot B = ||A||\cdot||B||\cos \theta$.
-
-Per la distanza coseno si usa una tecnica chiamata Iperpiani Random: scegliamone uno e consideriamo il suo vettore normale $v$, calcoliamo i prodotti $v\cdot x$ e $v\cdot y$. Possono esserci due casi, $sign(v\cdot x)=sign(v\cdot y)$ oppure $$sign(v_f\cdot x)\ne sign(v_f\cdot y)$$.
-
-Definiamo una funzione $f(x)$ scegliendo a caso un vettore $v_f$. Allora $f(x)=f(y)$ se e solo se $sign(v_f\cdot x)=sign(v_f\cdot y)$. La famiglia $F$, è $(d_i,d_2,\frac{180-d_1}{180},\frac{180-d_2}{180})$-sensitive con $d_1<d_2$.
-
-Ogni vettore $v$ determina una funzione hash $h_v$ con due bucket:
-
-- $h_v(x)=+1$ se $v\cdot x\ge 0$
-- $h_v(x)=-1$ se $v\cdot x<0$
-
-L'insieme di tutte le funzioni Local Sensitive derivate da un vettore si chiama $H$.
-
-Dati $x$ e $y$ allora:
-
-$$
-Pr[h(x)=h(y)]=1-\frac{d(x,y)}{\pi}
-$$
-Per esempio, analizziamo due punti $x$ e $y$ e vediamo come vengono classificati sulla base di due diversi iperpiani.
-
-![](.\img\random.png)
-
-Notiamo che i due iperpiani $v$ e $v'$ sono abbastanza diversi, e infatti in uno vengono i due punti classificati come simili e nell'altro come diversi. 
-
-Vediamo come costruire la signature:
-
-1. Prendiamo tot. vettori random e calcoliamo l'hash per ogni vettore
-2. Il risultato è la signature, ovvero uno sketch composto da +1 e -1 per ogni dato
-3. Possiamo usarlo per LSH
-
-Questa tecnica preserva la randomicità dato che ogni vettore normale ha la stessa probabilità di mappare i dati in una direzione o l'altra.
-
-Uno spazio euclideo (n)-dimensionale è un insieme di punti rappresentati come vettori di (n) numeri reali. La distanza tra due punti $p = (p_1, p_2, ..., p_n)$ e $q = (q_1, q_2, ..., q_n)$ viene calcolata usando una norma, che dipende dal parametro (r) nella definizione della norma $L_r$.
 
 Concentriamoci sulla distanza euclidea, ovvero con $r=2$. Si ha:
 $$
@@ -733,13 +576,6 @@ $$
 $$
 Quindi ogni riga della matrice è un punto nello spazio tridimensionale, ma una volta individuate le nuove basi allora cambiano le coordinate e abbiamo effettivamente ridotto in maniera efficiente! Potremmo avere anche uno spazio 2-dimensionale, a quel punto la dimensionality reduction si riduce ad identificare un punto in una retta di regressione, ovviamente introduciamo dell'errore ma è accettabile.
 
-Vantaggi:
-
-- Scoprire correlazioni nascoste
-- Rimuovere feature ridondanti
-- Visualizzazione
-- Memorizzazione ed elaborazione migliori
-
 
 
 ---
@@ -778,7 +614,7 @@ M = \begin{bmatrix}
 4&3
 \end{bmatrix}
 $$
-Calcoliamo la matrice di covarianza (metodo diverso rispetto quello visto prima):
+Calcoliamo la matrice di covarianza:
 $$
 M^TM=\begin{bmatrix} 1&2&3&4 \\ 3&1&4&3   \end{bmatrix}
 \begin{bmatrix}1&2\\2&1\\3&4\\4&3   \end{bmatrix} = \begin{bmatrix}30&28 \\ 28&30 \end{bmatrix}
@@ -813,9 +649,7 @@ ME = \begin{bmatrix} 1&2 \\ 2&1 \\ 3&4 \\ 4&3\end{bmatrix}
 $$
 ![](.\img\proj.png)
 
-Notiamo quindi che possiamo rappresentare i dati dando priorità all'asse con maggior varianza, e cancelliamo gli autovettori degli assi che hanno meno varianza. Il numero delle dimensioni dipende da noi, inoltre qui stiamo passando semplicemente da due dimensioni a una, ma immaginando di averne 50 e decidere di passare a 10 è un bel miglioramento.
-
-Notebook: https://colab.research.google.com/drive/1lykoVbdYyHVvdJ7dUme5yN2wNGbQOrQV?usp=sharing
+Notiamo quindi che possiamo rappresentare i dati dando priorità all'asse con maggior varianza. Il numero delle dimensioni dipende da noi, inoltre qui stiamo passando semplicemente da due dimensioni a una, ma immaginando di averne 50 e decidere di passare a 10 è un bel miglioramento.
 
 
 
@@ -825,11 +659,11 @@ Notebook: https://colab.research.google.com/drive/1lykoVbdYyHVvdJ7dUme5yN2wNGbQO
 
 **Singular Value Decomposition**
 
-Un altro metodo per liberarci delle dimensioni che meno rappresentano i nostri dati è la SVD, applicabile a qualsiasi matrice. Sia $M(m,n)$ una matrice dei dati di input e sia $r$ il suo rango, ricordiamo che il rango è il più grande numero di righe o colonne linearmente indipendenti. Allora possiamo definire le seguenti matrici:
+Un altro metodo per liberarci delle dimensioni che meno rappresentano i nostri dati è la SVD, applicabile a qualsiasi matrice. Sia $M(m,n)$ una matrice dei dati di input e sia $r$ il suo rango. Allora possiamo definire le seguenti matrici:
 
 - $U(m,r)$ è una matrice colonna ortonormale di sinistra, ognuna delle sue colonne è un vettore unitario e ortogonale alle altre colonne. Si considerano $m$ documenti ed $r$ concetti.
 - $V(n,r)$ è una matrice colonna ortonormale di destra, si considerano $n$ termini ed $r$ concetti.
-- $\Sigma$ è una matrice diagonale di dimensiione $r$ dove i suoi elementi sono chiamati singoli valori di $M$. Ogni valore rappresenta la forza di ogni concetto.
+- $\Sigma$ è una matrice diagonale di dimensione $r$ dove i suoi elementi sono chiamati singoli valori di $M$. Ogni valore rappresenta la forza di ogni concetto.
 
 ![](.\img\svd.png)
 
@@ -857,21 +691,9 @@ La matrice V collega i film ai concetti. Notiamo che ovviamente i primi 3 sono l
 
 Facendo una modifica all'esempio precedente, per esempio cambiando da 0 a 1 uno dei film Sci-Fi delle tre persone a cui piacciono film Romance il rango diventa 3, quindi i concetti sono 3: i primi due sono ancora Sci-Fi e Romance, il terzo è un po' più fumoso, ma in effetti non ha molta importanza. Immaginiamo che potrebbe essere eliminato, facendo quindi riduzione della dimensionalità con la SVD.
 
-Immaginiamo di voler rappresentare una matrice molto grande tramite la sua SVD. Le sottomatrici sono anch'esse troppo grandi da essere memorizzate, la miglior cosa da fare è ridurre la loro dimensionatà. Per esempio, poco fa avevamo tre valori singoli, vogliamo ridurre la dimensionalità quindi l'ultimo concetto per importanza lo impostiamo a zero. Ne segue, che a questo concetto stiamo dando importanza zero, e si perderanno le relative informazioni. La matrice che otterremo sarà quella che meglio rappresenta i dati di partenza ma con dimensionalità ridotta, la perdita di informazioni è accettabile.
+Immaginiamo di voler rappresentare una matrice molto grande tramite la sua SVD. Le sottomatrici sono anch'esse troppo grandi da essere memorizzate, la miglior cosa da fare è ridurre la loro dimensionatà. Per esempio, poco fa avevamo tre valori singoli, vogliamo ridurre la dimensionalità quindi l'ultimo concetto per importanza lo impostiamo a zero. Ne segue, che a questo concetto stiamo dando importanza zero, e si perderanno le relative informazioni.
 
-La scelta di rimuovere il valore singolare più piccolo riflette il voler minimizzare l'errore quadratico medio tra la matrice iniziale e la sua approssimazione. La norma di Frobenius consente di quantificare l'errore tra tali matrici. 
-$$
-||M||_F=\sqrt{\Sigma_{ij}M_{ij}^2}
-$$
-Pertanto per considerare la differenza di matrici avremo proprio:
-$$
-||A-B||_F=\sqrt{\Sigma_{ij}(a_{ij}-b_{ij})^2} \ \ \ \ \ (*)
-$$
-è possibile dimostrare che data una matrice $A$ scomposta con SVD, allora la nuova matrice $B$ ottenuta riducendo le dimensioni a $k=\text{rank}(B)$ è la miglior rappresentazione possibile della matrice $A$. Significa che minimizza la formula $(*)$. Questo perchè stiamo introducendo meno errore possibile con le dimensioni scelte.
-
-Diciamo che è bene tenere quelle dimensioni che ci consentono di mantenere il 90% delle informazioni di partenza. Quindi la somma dei quadrati dei valori singolari dovrebbe essere almeno il 90% della somma dei quadrati di tutti i valori singolari
-
-Rapporto tra la SVD e decomposizione mediante autovalori ...
+Diciamo che è bene tenere quelle dimensioni che ci consentono di mantenere il 90% delle informazioni di partenza. Quindi la somma dei quadrati dei valori singolari dovrebbe essere almeno il 90% della somma dei quadrati di tutti i valori singolari.
 
 La SVD ha complessità $O(nm^2)$, è implementata in diversi pacchetti in Matlab o R. Comunque sia la SVD è molto utile, ma è difficile da interpretare dato che ci stiamo privando di matrici sparse allora i dati sono molto densi.
 
@@ -962,8 +784,6 @@ Sono metodi simili al collaborative filtering ma usano un grafo bipartito, che i
 
 L'idea è che agli oggetti viene assegnata una certa quantità di risorse, e queste vengono trasferite dagli oggetti agli utenti, se questi lo hanno classificato come apprezzato e successivamente vengono trasferiti nuovamente agli utenti, ottenendo dopo una normalizzazione degli score per coppie utenti-oggetti. Funziona su tutti gli oggetti e risolve il problema della sparsità, ma restano i problemi di utenti nuovi e oggetti nuovi, e richiede molta potenza computazionale.
 
-![image-20250416122653804](C:\Users\simon\AppData\Roaming\Typora\typora-user-images\image-20250416122653804.png)
-
 Una volta fatte le predizioni possiamo valutarle confrontandole con dei ratings noti. Possiamo usare la RMSE, oppure fare dei ragionamenti sui falsi positivi e falsi negativi. Definiamo:
 $$
 \text{Precision}=\frac{tp}{tp + fp} \\ \text{Recall}=\frac{tp}{tp + fn}
@@ -1000,11 +820,7 @@ dove $e_i$ è il numero di archi tra i vicini del nodo i. Cioè se un nodo i si 
 
 Analizzando il caso di MSN, notiamo che il degree medio è 14.4, la lunghezza dei path media è 6.6 e il coefficiente di clustering medio è 0.11, come le valutiamo queste proprietà? ci sorprendono? per farlo dobbiamo definire un modello nullo.
 
-Adottando il modello del grafo random, definiamo appunto un grafo con n nodi e ogni arco appare con una certa probabilità.
-
-![image-20250416165012414](C:\Users\simon\AppData\Roaming\Typora\typora-user-images\image-20250416165012414.png)
-
-Sono risultati diversi dalla rete reale.
+Adottando il modello del grafo random, definiamo appunto un grafo con n nodi e ogni arco appare con una certa probabilità. Sono risultati diversi dalla rete reale.
 
 Le network sono sorprendenti perchè in media già con 6 gradi di libertà possiamo passare da una qualunque persona all’altra nel mondo.
 
@@ -1022,17 +838,9 @@ Il web è proprio questo, ma come risolviamo il problema del web search? Magari 
 
 
 
-
-
-
-
-
-
-
-
-
-
 ## Lezione 14 - Comunità nelle reti
+
+
 
 
 
